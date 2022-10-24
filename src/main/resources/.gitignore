@@ -1,0 +1,8 @@
+/target
+/.idea
+/logs
+/.mvn
+/.settings
+.project
+*.jar
+*.class
