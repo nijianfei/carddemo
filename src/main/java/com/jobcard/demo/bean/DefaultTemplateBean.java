@@ -75,8 +75,8 @@ public class DefaultTemplateBean {
     }
 
     public String getVisitReason1() {
-        if (getVisitReason().length() > 8) {
-            String sub = getVisitReason().substring(8);
+        if (StringUtils.isNotBlank(visitReason) && visitReason.length() > 8) {
+            String sub = visitReason.substring(8);
             if (sub.length() > 8) {
                 return sub.substring(0, 7) + "...";
             }
@@ -113,8 +113,8 @@ public class DefaultTemplateBean {
 
     public String getCompany() {
         if (StringUtils.isNotBlank(company)) {
-            if (company.length() > 9) {
-                return company.substring(0, 8) + "...";
+            if (company.length() > 10) {
+                return company.substring(0, 9) + "...";
             }
             return company;
         }

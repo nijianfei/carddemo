@@ -33,11 +33,6 @@ public class AcTransStatus implements CardReader.TransStatus {
     public void finish(boolean success) {
         log.info("AcTransStatus_progress_卡号：{}，写卡结果：{}" ,cardNum, success);
         this.isSuccess = success;
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         if (success) {
             DeviceManage.deviceState.get(rd.getDeviceNo()).setStateEnum(DeviceStateEnum.SUCC);
             DeviceManage.deviceState.get(rd.getDeviceNo()).setLastCardNo(cardNum);

@@ -54,7 +54,11 @@ public class TemplateAdapter {
         BufferedImage image = copyImage(this.background);
         int width = image.getWidth();
         image.getHeight();
-        Graphics graphics = image.getGraphics();
+        Graphics2D graphics = image.createGraphics();
+        //消除文字锯齿
+        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        //消除画图锯齿
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (CustomBlock customBlock : this.blockList) {
             try {
                 int type2 = customBlock.getType();
