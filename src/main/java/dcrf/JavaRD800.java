@@ -117,6 +117,7 @@ public class JavaRD800 {
             System.out.print(this.getClass().getSimpleName()+"_readCardId_dc_card error!\n");
             this.dc_exit(this.getDeviceNo());
         }
+        this.dc_exit(this.getDeviceNo());
         System.out.print("dc_card ok!\n");
         System.out.println("cardnum:" + pSnr[0]);
         if (pSnr[0] < 0) {
@@ -135,6 +136,7 @@ public class JavaRD800 {
         if (lDevice <= 0) {
             lDevice = rd.dc_init(++deviceNo, 115200);
             if (lDevice <= 0) {
+                rd.dc_exit(lDevice);
                 System.out.println("打开读卡器端口失败!" + deviceNo);
             }
         } else {

@@ -1,6 +1,7 @@
 package com.jobcard.demo.service.impl;
 
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.beust.jcommander.internal.Maps;
 import com.jobcard.demo.DemoApplication;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,19 +51,22 @@ public class CardServiceImpl implements CardService {
         TaskBean taskBean = null;
         JavaRD800 rd = null;
         int count = 0;
+        DeviceManage.setIsClean(false);
         while (true) {
             DeviceManage.sleep(1000);
             if (DeviceManage.taskQueueWait.size() == 0 && DeviceManage.taskQueueCurrent.size() == 0) {
                 break;
             }
-            DeviceManage.setIsClean(false);
+            if (DeviceManage.isIsClean() || DeviceManage.isInit()) {
+                break;
+            }
             if (Objects.isNull(rd = DeviceManage.readyQueue.pollFirst())) {
                 continue;
             }
             if (DeviceManage.taskQueueCurrent.size() != 0) {
                 continue;
             }
-            if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.pollLast()))) {
+            if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
                 break;
             }
 
@@ -95,20 +100,34 @@ public class CardServiceImpl implements CardService {
         if (isCheck) {
             Map<String, String> strMap = Maps.newHashMap("cardId", cardId, "userId", userId);
             //调用中台查询人卡是否合法
+            String paramsStr = null;
             try {
-                String post = HttpUtil.post(coreUrl, JSONUtil.toJsonStr(strMap));
-                log.error("请求中台校验人卡信息_参数：{}，返回结果：{}", JSONUtil.toJsonStr(strMap), post);
-                String resultCode = String.valueOf(JSONUtil.parseObj(post).get("result"));
-                return CoreCheckStateEnum.getEnumByCode(resultCode);
+                Map<String, String> paramMap = new HashMap<>();
+                paramMap.put("field", JSONUtil.toJsonStr(strMap));
+                paramMap.put("userID", "engine");
+                paramMap.put("sign", "1");
+                paramMap.put("method", "32013-IF04");
+                paramsStr = HttpUtil.toParams(paramMap);
+                String post = HttpUtil.post(coreUrl, paramsStr,5000);
+                log.error("请求中台[{}]校验人卡信息_参数：{}，返回结果：{}", coreUrl,paramsStr, post);
+                Object invokeCls = JSONUtil.parseObj(post).get("invokeCls");
+                Object invokeRes = JSONUtil.parseObj(post).get("invokeRes");
+                JSONObject entries = JSONUtil.parseObj(invokeRes);
+                if ("70".equals(invokeCls)) {
+                    Object result = JSONUtil.parseObj(entries).get("result");
+                    String resultCode = String.valueOf(result);
+                    return CoreCheckStateEnum.getEnumByCode(resultCode);
+                }
+                return CoreCheckStateEnum.S98;
             } catch (Exception e) {
-                log.error("请求中台校验人卡信息异常_参数：{}，异常堆栈信息：-->", JSONUtil.toJsonStr(strMap), e);
+                log.error("请求中台[{}]校验人卡信息异常_参数：{}，异常堆栈信息：-->", coreUrl,paramsStr, e);
                 return CoreCheckStateEnum.S98;
             }
         }
-        if (Objects.nonNull(DeviceManage.finishCardMap.get(cardId))) {
-            log.error("本次制卡任务中已存在此卡成功记录：{}", cardId);
-            return CoreCheckStateEnum.S1;
-        }
+//        if (Objects.nonNull(DeviceManage.finishCardMap.get(cardId))) {
+//            log.error("本次制卡任务中已存在此卡成功记录：{}", cardId);
+//            return CoreCheckStateEnum.S1;
+//        }
         return CoreCheckStateEnum.S_1;
     }
 

@@ -16,6 +16,10 @@ public class SoketResultVo {
      */
     private String userId;
     /**
+     * 姓名
+     */
+    private String userName;
+    /**
      * 卡号
      */
     private String cardId;
@@ -31,8 +35,9 @@ public class SoketResultVo {
     public SoketResultVo() {
     }
 
-    public SoketResultVo(String userId, String cardId, String execStatusCls, String message) {
+    public SoketResultVo(String userId,String userName, String cardId, String execStatusCls, String message) {
         this.userId = userId;
+        this.userName = userName;
         this.cardId = cardId;
         this.execStatusCls = execStatusCls;
         this.message = message;
@@ -51,6 +56,14 @@ public class SoketResultVo {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getCardId() {
@@ -76,4 +89,6 @@ public class SoketResultVo {
     public void setMessage(String message) {
         this.message = message;
     }
+
+
 }

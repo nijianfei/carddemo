@@ -59,8 +59,9 @@ public class DeviceManage {
     public static synchronized void initDevice() {
         SetInit(true);
         sleep(1000);
+//        DeviceManage.deviceState.clear();
         for (int i = 0; i < maxDeviceCount; i++) {
-            int deviceNo = 100 + i;
+            int deviceNo = 100 + 0;
             JavaRD800 rd = new JavaRD800();
             int lDevice = rd.dc_init(deviceNo, 115200);
             if (lDevice <= 0) {
@@ -76,6 +77,7 @@ public class DeviceManage {
             }
             System.out.print(String.format("dc_reset ok! %s\n", deviceNo));
             rd.setDeviceNo(lDevice);
+            String s = rd.readCardId();
             DeviceState deviceState = new DeviceState();
             deviceState.setRd(rd);
             deviceState.setStateEnum(DeviceStateEnum.FREE);
@@ -89,6 +91,7 @@ public class DeviceManage {
         String cardId = null;
         Map<String, String> cardInfo = taskBean.getParam();
         String userId = cardInfo.get("userId");
+        String userName = cardInfo.get("name");
         try {
             cardId = rd.readCardId();
             deviceNo = rd.getDeviceNo();
@@ -97,14 +100,14 @@ public class DeviceManage {
             taskBean.setTaskState(TaskStateEnum.BUSY);
             CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId);
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
+            //通知开始写卡
+            sendMsg(new SoketResultVo(userId, userName,cardId, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
             //可写卡
             if (coreCheckStateEnum.isUsable()) {
                 CardReader cardReader = new CardReader(rd, new AcTransStatus(rd));
                 TemplateAdapter adapter = TemplateAdapter.setTemplate(cardServiceImpl.getStyleData(cardInfo.get("visitorTypeCls")));
                 //分辨率：240x416
                 BufferedImage image = adapter.getImage(cardInfo);
-                //通知开始写卡
-                sendMsg(new SoketResultVo(userId, cardId, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
                 //设备写卡
                 CardReader.TransStatus start = cardReader.start(image);
                 if (start.isSuccess()) {
@@ -112,14 +115,14 @@ public class DeviceManage {
                     DeviceManage.finishCardMap.put(cardReader.getCardNum(), cardInfo.get("userId"));
                     taskBean.setTaskState(TaskStateEnum.SUCC);
                     //通知写卡成功
-                    sendMsg(new SoketResultVo(userId, cardId, DeviceStateEnum.SUCC.getCode(), DeviceStateEnum.SUCC.getValue()));
+                    sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.SUCC.getCode(), DeviceStateEnum.SUCC.getValue()));
                     return;
                 } else {
                     DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                     deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(start.getMessage()));
                     log.info("写卡异常,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                     taskBean.setTaskState(TaskStateEnum.FAIL);
-                    sendMsg(new SoketResultVo(userId, cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
+                    sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
                 }
             } else if (Objects.equals(CoreCheckStateEnum.S1.getCode(), coreCheckStateEnum.getCode())) {//卡已绑定，
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
@@ -127,13 +130,13 @@ public class DeviceManage {
                 deviceState.setLastCardNo(cardId);
                 log.info("写卡异常（卡已绑定）,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                 taskBean.setTaskState(TaskStateEnum.FAIL);
-                sendMsg(new SoketResultVo(userId, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
+                sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             } else if (Objects.equals(CoreCheckStateEnum.S2.getCode(), coreCheckStateEnum.getCode())) {//人已发卡,通知失败，跳过任务
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg("人已发卡"));
                 deviceState.setLastCardNo(cardId);
                 taskBean.setTaskState(TaskStateEnum.FAIL);
-                sendMsg(new SoketResultVo(userId, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
+                sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             } else if (Objects.equals(CoreCheckStateEnum.S3.getCode(), coreCheckStateEnum.getCode())) {//占用
                 taskBean.setTaskState(TaskStateEnum.RETRY);
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
@@ -146,7 +149,7 @@ public class DeviceManage {
             DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
             deviceState.setStateEnum(DeviceStateEnum.FAIL);
             taskBean.setTaskState(TaskStateEnum.FAIL);
-            sendMsg(new SoketResultVo(userId, cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
+            sendMsg(new SoketResultVo(userId, userName,cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
         }
         DeviceManage.taskQueueWait.addLast(taskBean);
     }
@@ -177,6 +180,8 @@ public class DeviceManage {
             return false;
         }
         log.info("DeviceManage_tryStartTask_isWord:{}，工作状态为false，无需清空", isWord);
+        DeviceManage.setWord(setWord);
+        DeviceManage.setIsClean(true);
         return true;
     }
 
