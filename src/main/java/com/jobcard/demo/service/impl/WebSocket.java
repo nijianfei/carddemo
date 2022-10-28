@@ -12,6 +12,7 @@ import com.jobcard.demo.util.TemplateSelectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -29,12 +30,9 @@ import java.util.stream.Collectors;
 @Component
 public class WebSocket {
 
-    @Autowired
-    private CardServiceImpl csi;
     /**
      * 静态变量，用来记录当前在线连接数。应该把它设计成线程安全的
      */
-
     private static int onlineCount = 0;
 
     /**
@@ -57,7 +55,7 @@ public class WebSocket {
      */
     @OnMessage
     public void onMessage(String message, Session session) {
-        log.info("START-来自客户端用户：{} 消息:{}", hashCode, message);
+        log.info("START---来自客户端用户：{} 消息:{}", hashCode, message);
         try {
             //check参数
             List<Map<String, String>> params = checkParams(message);
@@ -67,9 +65,8 @@ public class WebSocket {
             CheckAndBuild visitorTypeCls = TemplateSelectUtil.getInstansByCode(params.get(0).get("visitorTypeCls"));
             List<Map<String, String>> maps = visitorTypeCls.checkParam(message);
             ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
-            Future<?> submit = threadPoolTaskExecutor.submit(() -> executeTask(maps));
-
-            log.info("END-来自客户端用户：{} 消息:{}", hashCode, message);
+            threadPoolTaskExecutor.submit(() -> executeTask(maps));
+            log.info("END---来自客户端用户：{} 消息:{}", hashCode, message);
         } catch (Exception e) {
             DeviceManage.setWord(false);
             log.error("cardService.make-->", e);
@@ -81,27 +78,25 @@ public class WebSocket {
     private void executeTask(List<Map<String, String>> maps) {
         long time = new Date().getTime();
         Integer tHashCode = Thread.currentThread().hashCode();
-        threadMap.put(tHashCode,time);
+        threadMap.put(tHashCode, time);
         //制卡
         CardServiceImpl cardService = DemoApplication.ac.getBean(CardServiceImpl.class);
         int tryMaxCount = 10;
         while (tryMaxCount-- > 0) {
             Long maxLong = threadMap.values().stream().max(Comparator.comparing(Long::longValue)).get();
-            log.info("当前线程时间戳：{}，threadMap最大时间戳：{},对比结果：{}，threadMapSize：{}",time,maxLong,time<maxLong,threadMap.size());
-            if(time < maxLong){
+            log.info("当前线程时间戳：{}，threadMap最大时间戳：{},对比结果：{}，threadMapSize：{}", time, maxLong, time < maxLong, threadMap.size());
+            if (time < maxLong) {
                 break;
             }
             if (DeviceManage.tryStartTask(true)) {
-                log.info("tHashCode：{}-开始任务_isWord:{}，isClean：{}，isInit：{}", tHashCode,DeviceManage.isWord(),DeviceManage.isIsClean(),DeviceManage.isInit());
-                DeviceManage.sleep(2000);
-                DeviceManage.setWord(true);
+                log.info("tHashCode：{}-开始任务_isWord:{}，isClean：{}，isInit：{}", tHashCode, DeviceManage.isWord(), DeviceManage.isIsClean(), DeviceManage.isInit());
                 List<TaskBean> taskList = maps.stream().map(m -> new TaskBean(hashCode, m)).collect(Collectors.toList());
                 cardService.make(taskList);
                 break;
             }
             DeviceManage.sleep(2000);
         }
-        threadMap.remove(tHashCode) ;
+        threadMap.remove(tHashCode);
     }
 
     /**
@@ -142,11 +137,14 @@ public class WebSocket {
         subOnlineCount();
         int tryMaxCount = 10;
         while (tryMaxCount-- > 0) {
-             if (!DeviceManage.tryStartTask(false)) {
-                 DeviceManage.setIsClean(false);
-                 break;
+            if (webSocketMap.size() != 0) {
+                break;
             }
-            log.info("客户端{}关闭连接！连接数：{}尝试清空任务/设备状态", sessionHashCode,onlineCount);
+            if (DeviceManage.tryStartTask(false)) {
+                DeviceManage.setIsClean(false);
+                break;
+            }
+            log.info("客户端{}关闭连接！连接数：{},尝试清空任务/设备状态", sessionHashCode, onlineCount);
             DeviceManage.sleep(2000);
         }
         log.info("用户{}关闭连接！当前在线人数为{}", sessionHashCode, getOnlineCount());
@@ -216,5 +214,9 @@ public class WebSocket {
             }
         }
         return null;
+    }
+
+    public static boolean isTryStart() {
+        return threadMap.size() > 1;
     }
 }

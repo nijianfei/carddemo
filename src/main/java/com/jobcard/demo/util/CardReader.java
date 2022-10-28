@@ -1,6 +1,7 @@
 package com.jobcard.demo.util;
 
 import cn.hutool.core.date.DateUtil;
+import com.jobcard.demo.service.impl.WebSocket;
 import dcrf.JavaRD800;
 
 import java.awt.image.BufferedImage;
@@ -32,31 +33,7 @@ public class CardReader {
     public CardReader(JavaRD800 rd, TransStatus transStatus2) {
         this.rd = rd;
         this.transStatus = transStatus2;
-        this.lDevice = rd.getDeviceNo();
-    }
-
-    public String getCardId() {
-        long cardNum;
-        int[] pSnr = new int[20];
-        if (this.rd.dc_card(this.lDevice, (short) 0, pSnr) != 0) {
-            System.out.print(this.getClass().getSimpleName()+"_readCardId_dc_card error!\n");
-            this.transStatus.notifyMessage("卡片初始化失败");
-            this.rd.dc_exit(this.lDevice);
-            return null;
-        }
-        System.out.print("dc_card ok!\n");
-        System.out.println("cardnum:" + pSnr[0]);
-        if (pSnr[0] < 0) {
-            cardNum = -(-4294967296L - ((long) pSnr[0]));
-        } else {
-            cardNum = pSnr[0];
-        }
-        String cardId = String.valueOf(cardNum);
-        StringBuilder builder = new StringBuilder(cardId);
-        for (int i = 0; i < 10 - cardId.length(); i++) {
-            builder.insert(0, "0");
-        }
-        return cardId;
+        this.lDevice = rd.getlDevice();
     }
 
     public TransStatus start(BufferedImage image) {

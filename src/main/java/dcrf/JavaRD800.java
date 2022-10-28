@@ -3,7 +3,9 @@ package dcrf;
 import java.util.Objects;
 
 public class JavaRD800 {
+    private int lDevice = 0;
     private int deviceNo = 0;
+
     public native short dc_anticoll(int i, short s, int[] iArr);
 
     public native short dc_authentication(int i, short s, short s2);
@@ -101,6 +103,14 @@ public class JavaRD800 {
         System.loadLibrary("javaRD800");
     }
 
+    public int getlDevice() {
+        return lDevice;
+    }
+
+    public void setlDevice(int lDevice) {
+        this.lDevice = lDevice;
+    }
+
     public int getDeviceNo() {
         return deviceNo;
     }
@@ -109,28 +119,28 @@ public class JavaRD800 {
         this.deviceNo = deviceNo;
     }
 
-    public String readCardId(){
+    public String readCardId() {
         initDevice();
         long cardNum;
         int[] pSnr = new int[20];
-        if (this.dc_card(this.getDeviceNo(),  (short) 0, pSnr) != 0) {
-            System.out.print(this.getClass().getSimpleName()+"_readCardId_dc_card error!\n");
-            this.dc_exit(this.getDeviceNo());
+        if (this.dc_card(this.getlDevice(), (short) 0, pSnr) != 0) {
+            System.out.print(this.getClass().getSimpleName() + "_readCardId_dc_card error!\n");
+            this.dc_exit(this.getlDevice());
         }
-        this.dc_exit(this.getDeviceNo());
-        System.out.print("dc_card ok!\n");
-        System.out.println("cardnum:" + pSnr[0]);
+        this.dc_exit(this.getlDevice());
+//        System.out.print("dc_card ok!\n");
+//        System.out.println("cardnum:" + pSnr[0]);
         if (pSnr[0] < 0) {
             cardNum = -(-4294967296L - ((long) pSnr[0]));
         } else {
             cardNum = pSnr[0];
         }
         String cardId = String.valueOf(cardNum);
+//        System.out.println("cardId:" + cardId);
         return cardId;
     }
 
-    public int initDevice(){
-        int deviceNo = 100;
+    public int initDevice() {
         JavaRD800 rd = new JavaRD800();
         int lDevice = rd.dc_init(deviceNo, 115200);
         if (lDevice <= 0) {
@@ -140,13 +150,13 @@ public class JavaRD800 {
                 System.out.println("打开读卡器端口失败!" + deviceNo);
             }
         } else {
-            System.out.print(String.format("dc_init ok! %s\n", deviceNo));
+//            System.out.print(String.format("dc_init ok! %s\n", deviceNo));
         }
         if (rd.dc_reset(lDevice, 1) != 0) {
             System.out.print(String.format("dc_reset error! %s\n", deviceNo));
             rd.dc_exit(lDevice);
         }
-        System.out.print(String.format("dc_reset ok! %s\n", deviceNo));
+//        System.out.print(String.format("dc_reset ok! %s\n", deviceNo));
         return lDevice;
     }
 
@@ -155,11 +165,11 @@ public class JavaRD800 {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         JavaRD800 javaRD800 = (JavaRD800) o;
-        return deviceNo == javaRD800.deviceNo;
+        return lDevice == javaRD800.lDevice;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(deviceNo);
+        return Objects.hash(lDevice);
     }
 }

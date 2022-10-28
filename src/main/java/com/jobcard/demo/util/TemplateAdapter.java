@@ -45,7 +45,7 @@ public class TemplateAdapter {
         arrayInputStream.close();
         System.out.println("图片长度：" + picBytes.length);
         String blockStr = new String(Arrays.copyOfRange(bytes, picLen + 4, bytes.length), StandardCharsets.UTF_8);
-        System.out.println(blockStr);
+//        System.out.println(blockStr);
         adapter.blockList = adapter.gson.fromJson(blockStr, adapter.type);
         return adapter;
     }
@@ -67,13 +67,13 @@ public class TemplateAdapter {
                 int x = customBlock.getX();
                 int y = customBlock.getY();
                 int layout = customBlock.getLayout();
-                System.out.println(blockName + "-x:" + x);
-                System.out.println(blockName + "-y:" + y);
+//                System.out.println(blockName + "-x:" + x);
+//                System.out.println(blockName + "-y:" + y);
                 if (type2 == 0) {
                     String fontName = customBlock.getFont();
                     int fontStyle = customBlock.getFontStyle();
                     float fontSize = customBlock.getFontSize();
-                    System.out.println(blockName + "-字号：" + fontSize);
+//                    System.out.println(blockName + "-字号：" + fontSize);
                     graphics.setFont(new Font(fontName, fontStyle, (int) fontSize).deriveFont(fontSize * 1.3f));
                     graphics.setColor(new Color(customBlock.getColor()));
 

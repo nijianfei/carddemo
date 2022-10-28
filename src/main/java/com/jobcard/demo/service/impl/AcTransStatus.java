@@ -19,14 +19,14 @@ public class AcTransStatus implements CardReader.TransStatus {
 
     @Override
     public void notifyMessage(String message) {
-        log.info("AcTransStatus_notifyMessage_卡号：{}，写卡信息：{}" ,cardNum, message);
+        log.debug("AcTransStatus_notifyMessage_卡号：{}，写卡信息：{}" ,cardNum, message);
         this.message = message;
-        DeviceManage.deviceState.get(rd.getDeviceNo()).setMsg(message);
+        DeviceManage.deviceState.get(rd.getlDevice()).setMsg(message);
     }
 
     @Override
     public void progress(double progress) {
-        log.info("AcTransStatus_progress_卡号：{}，写卡进度：{}" ,cardNum, progress);
+        log.debug("AcTransStatus_progress_卡号：{}，写卡进度：{}" ,cardNum, progress);
     }
 
     @Override
@@ -34,18 +34,18 @@ public class AcTransStatus implements CardReader.TransStatus {
         log.info("AcTransStatus_progress_卡号：{}，写卡结果：{}" ,cardNum, success);
         this.isSuccess = success;
         if (success) {
-            DeviceManage.deviceState.get(rd.getDeviceNo()).setStateEnum(DeviceStateEnum.SUCC);
-            DeviceManage.deviceState.get(rd.getDeviceNo()).setLastCardNo(cardNum);
+            DeviceManage.deviceState.get(rd.getlDevice()).setStateEnum(DeviceStateEnum.SUCC);
+            DeviceManage.deviceState.get(rd.getlDevice()).setLastCardNo(cardNum);
         } else {
-            DeviceManage.deviceState.get(rd.getDeviceNo()).setStateEnum(DeviceStateEnum.FAIL);
+            DeviceManage.deviceState.get(rd.getlDevice()).setStateEnum(DeviceStateEnum.FAIL);
         }
     }
 
     @Override
     public void getCardId(String num) {
-        log.info("AcTransStatus_progress_设备号：{}，获取到卡号：{}" ,rd.getDeviceNo(),cardNum);
+        log.info("AcTransStatus_progress_设备号：{}，获取到卡号：{}" ,rd.getlDevice(),cardNum);
         this.cardNum = num;
-        DeviceManage.deviceState.get(rd.getDeviceNo()).setLastCardNo(num);
+        DeviceManage.deviceState.get(rd.getlDevice()).setLastCardNo(num);
     }
 
     @Override

@@ -46,7 +46,7 @@ public class DeviceManage {
      */
     public static final Map<String, String> finishCardMap = new ConcurrentHashMap<>();
 
-    private static final int maxDeviceCount = 3;
+    private static final int maxDeviceCount = 5;
 
     public static synchronized boolean isInit() {
         return isInit;
@@ -61,7 +61,7 @@ public class DeviceManage {
         sleep(1000);
 //        DeviceManage.deviceState.clear();
         for (int i = 0; i < maxDeviceCount; i++) {
-            int deviceNo = 100 + 0;
+            int deviceNo = 100 + i;
             JavaRD800 rd = new JavaRD800();
             int lDevice = rd.dc_init(deviceNo, 115200);
             if (lDevice <= 0) {
@@ -76,8 +76,8 @@ public class DeviceManage {
                 continue;
             }
             System.out.print(String.format("dc_reset ok! %s\n", deviceNo));
-            rd.setDeviceNo(lDevice);
-            String s = rd.readCardId();
+            rd.setlDevice(lDevice);
+            rd.setDeviceNo(deviceNo);
             DeviceState deviceState = new DeviceState();
             deviceState.setRd(rd);
             deviceState.setStateEnum(DeviceStateEnum.FREE);
@@ -94,7 +94,7 @@ public class DeviceManage {
         String userName = cardInfo.get("name");
         try {
             cardId = rd.readCardId();
-            deviceNo = rd.getDeviceNo();
+            deviceNo = rd.getlDevice();
             log.info("获取可用设备：{},读取卡号：{}", deviceNo, cardId);
             DeviceManage.deviceState.get(deviceNo).setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
@@ -126,23 +126,24 @@ public class DeviceManage {
                 }
             } else if (Objects.equals(CoreCheckStateEnum.S1.getCode(), coreCheckStateEnum.getCode())) {//卡已绑定，
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
-                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg("卡已绑定"));
+                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S1.getName()));
                 deviceState.setLastCardNo(cardId);
                 log.info("写卡异常（卡已绑定）,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             } else if (Objects.equals(CoreCheckStateEnum.S2.getCode(), coreCheckStateEnum.getCode())) {//人已发卡,通知失败，跳过任务
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
-                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg("人已发卡"));
+                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S2.getName()));
                 deviceState.setLastCardNo(cardId);
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
+                return;
             } else if (Objects.equals(CoreCheckStateEnum.S3.getCode(), coreCheckStateEnum.getCode())) {//占用
                 taskBean.setTaskState(TaskStateEnum.RETRY);
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
-                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg("状态未知等待重试"));
+                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S3.getName()));
                 deviceState.setLastCardNo(cardId);
-//                sendMsg(new SoketResultVo(userId,cardId,DeviceStateEnum.FAIL.getCode(),coreCheckStateEnum.getName()));
+                sendMsg(new SoketResultVo(userId,userName,cardId,DeviceStateEnum.FAIL.getCode(),coreCheckStateEnum.getName()));
             }
         } catch (Exception e) {
             log.error("工号：{}，写卡异常-->", cardInfo.get("userId"), e);
@@ -151,7 +152,10 @@ public class DeviceManage {
             taskBean.setTaskState(TaskStateEnum.FAIL);
             sendMsg(new SoketResultVo(userId, userName,cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
         }
-        DeviceManage.taskQueueWait.addLast(taskBean);
+        if (!WebSocket.isTryStart()) {
+            DeviceManage.taskQueueWait.addLast(taskBean);
+        }
+
     }
 
     public static synchronized boolean tryStartTask(boolean setWord) {
@@ -160,21 +164,13 @@ public class DeviceManage {
             if (isClean || isInit) {
                 return false;
             }
+            taskQueueWait.clear();
             long wordCount = taskQueueCurrent.stream().filter(t -> TaskStateEnum.BUSY.equals(t.getTaskState())).count();
             if (wordCount == 0) {
                 isClean = true;
-                sleep(2000);
-                wordCount = taskQueueCurrent.stream().filter(t -> TaskStateEnum.BUSY.equals(t.getTaskState())).count();
-                if (wordCount == 0) {
-                    cleanState(setWord);
-                    log.info("DeviceManage_tryStartTask_wordCount:{},成功清空任务/设备状态,存在工作设备", wordCount);
-                    return true;
-                }else{
-                    log.info("DeviceManage_tryStartTask_wordCount:{},未清空任务/设备状态,存在工作设备", wordCount);
-                    isClean = false;
-                }
-                log.info("DeviceManage_tryStartTask_wordCount:{},未清空任务/设备状态,存在工作设备", wordCount);
-                return false;
+                cleanState(setWord);
+                log.info("DeviceManage_tryStartTask_wordCount:{},成功清空任务/设备状态,存在工作设备", wordCount);
+                return true;
             }
             log.info("DeviceManage_tryStartTask_wordCount:{},未清空任务/设备状态,存在工作设备", wordCount);
             return false;
@@ -241,32 +237,4 @@ public class DeviceManage {
         DeviceManage.isClean = isClean;
     }
 
-    public static void main(String[] args) {
-        List<Object> countList = new ArrayList<>();
-        while (countList.size() <= 1) {
-            for (int i = 0; i < 10; i++) {
-                int deviceNo = 100 + i;
-                JavaRD800 rd = new JavaRD800();
-                int lDevice = rd.dc_init(deviceNo, 115200);
-                if (lDevice <= 0) {
-                    System.out.println("打开读卡器端口失败!" + deviceNo);
-                    continue;
-                } else {
-                    System.out.print(String.format("dc_init ok! %s\n", deviceNo));
-                }
-                if (rd.dc_reset(lDevice, 1) != 0) {
-                    System.out.print(String.format("dc_reset error! %s\n", deviceNo));
-                    rd.dc_exit(lDevice);
-                    continue;
-                }
-                System.out.print(String.format("传入参数 %s 成功获取设备号 %s\n", deviceNo, lDevice));
-                countList.add(rd);
-            }
-            if (countList.size() < 2) {
-                countList.clear();
-            }
-        }
-
-
-    }
 }

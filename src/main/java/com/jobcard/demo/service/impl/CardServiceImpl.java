@@ -53,29 +53,28 @@ public class CardServiceImpl implements CardService {
         int count = 0;
         DeviceManage.setIsClean(false);
         while (true) {
-            DeviceManage.sleep(1000);
-            if (DeviceManage.taskQueueWait.size() == 0 && DeviceManage.taskQueueCurrent.size() == 0) {
-                break;
-            }
-            if (DeviceManage.isIsClean() || DeviceManage.isInit()) {
-                break;
-            }
-            if (Objects.isNull(rd = DeviceManage.readyQueue.pollFirst())) {
-                continue;
-            }
-            if (DeviceManage.taskQueueCurrent.size() != 0) {
-                continue;
-            }
-            if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
-                break;
-            }
-
-            taskBean.setTaskState(TaskStateEnum.BUSY);
-            DeviceManage.taskQueueCurrent.add(taskBean);
-
             try {
+                if (DeviceManage.taskQueueWait.size() == 0 && DeviceManage.taskQueueCurrent.size() == 0) {
+                    break;
+                }
+                if (Objects.isNull(rd = DeviceManage.readyQueue.pollFirst())) {
+                    DeviceManage.sleep(500);
+                    continue;
+                }
+                DeviceManage.deviceState.get(rd.getlDevice()).setStateEnum(DeviceStateEnum.BUSY);
+                if (WebSocket.isTryStart()) {
+                    DeviceManage.taskQueueWait.clear();
+                    DeviceManage.sleep(500);
+                    continue;
+                }
+                if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
+                    DeviceManage.sleep(500);
+                    continue;
+                }
+                taskBean.setTaskState(TaskStateEnum.BUSY);
+                DeviceManage.taskQueueCurrent.add(taskBean);
                 log.info("第{}次執行，写卡信息：{}", ++count, JSONUtil.toJsonStr(taskBean));
-                DeviceManage.deviceState.get(rd.getDeviceNo()).setStateEnum(DeviceStateEnum.BUSY);
+
                 final TaskBean tBean = taskBean;
                 final JavaRD800 finalRd = rd;
                 threadPoolTaskExecutor.submit(() -> {
@@ -108,8 +107,8 @@ public class CardServiceImpl implements CardService {
                 paramMap.put("sign", "1");
                 paramMap.put("method", "32013-IF04");
                 paramsStr = HttpUtil.toParams(paramMap);
-                String post = HttpUtil.post(coreUrl, paramsStr,5000);
-                log.error("请求中台[{}]校验人卡信息_参数：{}，返回结果：{}", coreUrl,paramsStr, post);
+                String post = HttpUtil.post(coreUrl, paramsStr, 5000);
+                log.error("请求中台[{}]校验人卡信息_参数：{}，返回结果：{}", coreUrl, paramsStr, post);
                 Object invokeCls = JSONUtil.parseObj(post).get("invokeCls");
                 Object invokeRes = JSONUtil.parseObj(post).get("invokeRes");
                 JSONObject entries = JSONUtil.parseObj(invokeRes);
@@ -120,7 +119,7 @@ public class CardServiceImpl implements CardService {
                 }
                 return CoreCheckStateEnum.S98;
             } catch (Exception e) {
-                log.error("请求中台[{}]校验人卡信息异常_参数：{}，异常堆栈信息：-->", coreUrl,paramsStr, e);
+                log.error("请求中台[{}]校验人卡信息异常_参数：{}，异常堆栈信息：-->", coreUrl, paramsStr, e);
                 return CoreCheckStateEnum.S98;
             }
         }
