@@ -95,13 +95,14 @@ public class DeviceManage {
         try {
             cardId = rd.readCardId();
             deviceNo = rd.getlDevice();
+            taskBean.setCardId(cardId);
             log.info("获取可用设备：{},读取卡号：{}", deviceNo, cardId);
             DeviceManage.deviceState.get(deviceNo).setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
             CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId);
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
             //通知开始写卡
-            sendMsg(new SoketResultVo(userId, userName,cardId, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
+            sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
             //可写卡
             if (coreCheckStateEnum.isUsable()) {
                 CardReader cardReader = new CardReader(rd, new AcTransStatus(rd));
@@ -115,14 +116,14 @@ public class DeviceManage {
                     DeviceManage.finishCardMap.put(cardReader.getCardNum(), cardInfo.get("userId"));
                     taskBean.setTaskState(TaskStateEnum.SUCC);
                     //通知写卡成功
-                    sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.SUCC.getCode(), DeviceStateEnum.SUCC.getValue()));
+                    sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.SUCC.getCode(), DeviceStateEnum.SUCC.getValue()));
                     return;
                 } else {
                     DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                     deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(start.getMessage()));
                     log.info("写卡异常,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                     taskBean.setTaskState(TaskStateEnum.FAIL);
-                    sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
+                    sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
                 }
             } else if (Objects.equals(CoreCheckStateEnum.S1.getCode(), coreCheckStateEnum.getCode())) {//卡已绑定，
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
@@ -130,27 +131,27 @@ public class DeviceManage {
                 deviceState.setLastCardNo(cardId);
                 log.info("写卡异常（卡已绑定）,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                 taskBean.setTaskState(TaskStateEnum.FAIL);
-                sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
+                sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             } else if (Objects.equals(CoreCheckStateEnum.S2.getCode(), coreCheckStateEnum.getCode())) {//人已发卡,通知失败，跳过任务
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S2.getName()));
                 deviceState.setLastCardNo(cardId);
                 taskBean.setTaskState(TaskStateEnum.FAIL);
-                sendMsg(new SoketResultVo(userId,userName, cardId, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
+                sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
                 return;
             } else if (Objects.equals(CoreCheckStateEnum.S3.getCode(), coreCheckStateEnum.getCode())) {//占用
                 taskBean.setTaskState(TaskStateEnum.RETRY);
                 DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S3.getName()));
                 deviceState.setLastCardNo(cardId);
-                sendMsg(new SoketResultVo(userId,userName,cardId,DeviceStateEnum.FAIL.getCode(),coreCheckStateEnum.getName()));
+                sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             }
         } catch (Exception e) {
             log.error("工号：{}，写卡异常-->", cardInfo.get("userId"), e);
             DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
             deviceState.setStateEnum(DeviceStateEnum.FAIL);
             taskBean.setTaskState(TaskStateEnum.FAIL);
-            sendMsg(new SoketResultVo(userId, userName,cardId, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
+            sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
         }
         if (!WebSocket.isTryStart()) {
             DeviceManage.taskQueueWait.addLast(taskBean);
@@ -160,7 +161,7 @@ public class DeviceManage {
 
     public static synchronized boolean tryStartTask(boolean setWord) {
         if (isWord || isClean || isInit) {
-            log.info("DeviceManage_tryStartTask_isWord:{}，isClean：{}，isInit：{}", isWord,isClean,isInit);
+            log.info("DeviceManage_tryStartTask_isWord:{}，isClean：{}，isInit：{}", isWord, isClean, isInit);
             if (isClean || isInit) {
                 return false;
             }
@@ -199,17 +200,22 @@ public class DeviceManage {
         readyQueue.clear();
         deviceState.clear();
         finishCardMap.clear();
-            setWord(isWord);
+        setWord(isWord);
         log.info("cleanState_清空任务/设备状态！\r\n taskQueueWait.size:{},taskQueueCurrent.size:{},readyQueue.size:{},deviceState.size:{},finishCardMap.size:{}"
-                ,taskQueueWait.size(),taskQueueCurrent.size(),readyQueue.size(),deviceState.size(),finishCardMap.size());
+                , taskQueueWait.size(), taskQueueCurrent.size(), readyQueue.size(), deviceState.size(), finishCardMap.size());
     }
 
 
     private static void sendMsg(SoketResultVo srVo) {
         Optional<WebSocket> first = WebSocket.webSocketMap.values().stream().findFirst();
         first.ifPresent(ws -> {
-            log.info("【发送Socket通知信息】：{}", JSONUtil.toJsonStr(Arrays.asList(srVo)));
-            ws.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
+            if (ws.getHashCode().equals(srVo.sessionHashCode)) {
+                log.info("【发送Socket通知信息】：{}", JSONUtil.toJsonStr(Arrays.asList(srVo)));
+                ws.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
+            } else {
+                log.info("【发送Socket通知信息——源连接ws.getHashCode()：{}，现连接srVo.sessionHashCode：{}】不一致，跳过通知！！！ 内容：{}",
+                        ws.getHashCode(), srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
+            }
         });
     }
 

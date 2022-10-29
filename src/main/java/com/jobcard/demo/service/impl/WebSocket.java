@@ -11,8 +11,6 @@ import com.jobcard.demo.service.CheckAndBuild;
 import com.jobcard.demo.util.TemplateSelectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -22,7 +20,6 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,7 +37,7 @@ public class WebSocket {
      */
     public static ConcurrentHashMap<Integer, WebSocket> webSocketMap = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<Integer, Long> threadMap = new ConcurrentHashMap<>();
-    public static Integer hashCode;
+    private Integer hashCode = 0;
     /**
      * 与某个客户端的连接会话，需要通过它来给客户端发送数据
      */
@@ -65,17 +62,17 @@ public class WebSocket {
             CheckAndBuild visitorTypeCls = TemplateSelectUtil.getInstansByCode(params.get(0).get("visitorTypeCls"));
             List<Map<String, String>> maps = visitorTypeCls.checkParam(message);
             ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
-            threadPoolTaskExecutor.submit(() -> executeTask(maps));
+            threadPoolTaskExecutor.submit(() -> executeTask(maps,session.hashCode()));
             log.info("END---来自客户端用户：{} 消息:{}", hashCode, message);
         } catch (Exception e) {
             DeviceManage.setWord(false);
             log.error("cardService.make-->", e);
-            SoketResultVo soketResultVo = new SoketResultVo(null, null, null, TaskStateEnum.FAIL.getCode(), e.getMessage());
+            SoketResultVo soketResultVo = new SoketResultVo(null, TaskStateEnum.FAIL.getCode(), e.getMessage());
             sendMessage(JSONUtil.toJsonStr(Arrays.asList(soketResultVo)));
         }
     }
 
-    private void executeTask(List<Map<String, String>> maps) {
+    private void executeTask(List<Map<String, String>> maps, final int sessionHashCode) {
         long time = new Date().getTime();
         Integer tHashCode = Thread.currentThread().hashCode();
         threadMap.put(tHashCode, time);
@@ -90,7 +87,7 @@ public class WebSocket {
             }
             if (DeviceManage.tryStartTask(true)) {
                 log.info("tHashCode：{}-开始任务_isWord:{}，isClean：{}，isInit：{}", tHashCode, DeviceManage.isWord(), DeviceManage.isIsClean(), DeviceManage.isInit());
-                List<TaskBean> taskList = maps.stream().map(m -> new TaskBean(hashCode, m)).collect(Collectors.toList());
+                List<TaskBean> taskList = maps.stream().map(m -> new TaskBean(sessionHashCode, m)).collect(Collectors.toList());
                 cardService.make(taskList);
                 break;
             }
@@ -218,5 +215,9 @@ public class WebSocket {
 
     public static boolean isTryStart() {
         return threadMap.size() > 1;
+    }
+
+    public Integer getHashCode() {
+        return hashCode;
     }
 }

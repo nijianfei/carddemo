@@ -1,5 +1,8 @@
 package com.jobcard.demo.bean;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * 卓越 2022/10/12 19:44:13
  * 【刷卡消息】
@@ -32,22 +35,21 @@ public class SoketResultVo {
      */
     private String message;
 
+
+    public Integer sessionHashCode;
     public SoketResultVo() {
     }
 
-    public SoketResultVo(String userId,String userName, String cardId, String execStatusCls, String message) {
-        this.userId = userId;
-        this.userName = userName;
-        this.cardId = cardId;
+    public SoketResultVo(TaskBean taskBean, String execStatusCls, String message) {
+        Optional.ofNullable(taskBean).ifPresent(t -> {
+            Map<String, String> cardInfo = t.getParam();
+            this.userId = cardInfo.get("userId");
+            this.userName =cardInfo.get("name");
+            this.cardId = t.getCardId();
+            this.sessionHashCode = t.getSessionHashCode();
+        });
         this.execStatusCls = execStatusCls;
         this.message = message;
-    }
-
-    public SoketResultVo(DeviceState ds) {
-        this.cardId = ds.getLastCardNo();
-        this.userId = ds.getUserId();
-        this.execStatusCls = ds.getStateEnum().getCode();
-        this.message = ds.getMsg();
     }
 
     public String getUserId() {

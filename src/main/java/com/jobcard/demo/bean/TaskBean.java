@@ -5,25 +5,26 @@ import com.jobcard.demo.enums.TaskStateEnum;
 import java.util.Map;
 
 public class TaskBean {
-    private Integer hashCode;
+    private Integer sessionHashCode;
     private Map<String,String> param;
 
     private TaskStateEnum taskState = TaskStateEnum.READY;
 
+    private String cardId;
     public TaskBean() {
     }
 
-    public TaskBean(Integer hashCode, Map<String, String> param) {
-        this.hashCode = hashCode;
+    public TaskBean(Integer sessionHashCode, Map<String, String> param) {
+        this.sessionHashCode = sessionHashCode;
         this.param = param;
     }
 
-    public Integer getHashCode() {
-        return hashCode;
+    public Integer getSessionHashCode() {
+        return sessionHashCode;
     }
 
-    public void setHashCode(Integer hashCode) {
-        this.hashCode = hashCode;
+    public void setSessionHashCode(Integer sessionHashCode) {
+        this.sessionHashCode = sessionHashCode;
     }
 
     public Map<String, String> getParam() {
@@ -40,5 +41,13 @@ public class TaskBean {
 
     public void setTaskState(TaskStateEnum taskState) {
         this.taskState = taskState;
+    }
+
+
+    public void setCardId(String cardId) {
+    }
+
+    public String getCardId() {
+        return cardId;
     }
 }

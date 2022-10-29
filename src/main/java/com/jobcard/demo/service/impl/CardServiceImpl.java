@@ -38,10 +38,9 @@ public class CardServiceImpl implements CardService {
     /**
      * 根据人员信息，制作电子卡
      *
-     * @param cardInfos 卡信息
+     * @param cardInfos       卡信息
      * @return
      */
-    @Override
     public void make(List<TaskBean> cardInfos) {
         log.info("CardServiceImpl_make_cardInfos.size:{},JSON:{}", cardInfos.size(), JSONUtil.toJsonStr(cardInfos));
         ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
