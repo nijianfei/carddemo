@@ -45,6 +45,7 @@ public class TaskBean {
 
 
     public void setCardId(String cardId) {
+        this.cardId = cardId;
     }
 
     public String getCardId() {

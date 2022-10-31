@@ -20,6 +20,7 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,11 +32,11 @@ public class WebSocket {
      * 静态变量，用来记录当前在线连接数。应该把它设计成线程安全的
      */
     private static int onlineCount = 0;
-
+    private static Integer currentHashCode = 0;
     /**
      * concurrent包的线程安全Map，用来存放每个客户端对应的WebSocket对象
      */
-    public static ConcurrentHashMap<Integer, WebSocket> webSocketMap = new ConcurrentHashMap<>();
+    public static ConcurrentSkipListMap<Integer, WebSocket> webSocketMap = new ConcurrentSkipListMap<>();
     public static ConcurrentHashMap<Integer, Long> threadMap = new ConcurrentHashMap<>();
     private Integer hashCode = 0;
     /**
@@ -116,6 +117,7 @@ public class WebSocket {
     public void onOpen(Session session) {
         this.session = session;
         this.hashCode = session.hashCode();
+        WebSocket.currentHashCode = this.hashCode;
         log.info("WebSocket_onOpen_Session_HashCode:{}", hashCode);
         //加入map
         webSocketMap.put(session.hashCode(), this);
@@ -219,5 +221,9 @@ public class WebSocket {
 
     public Integer getHashCode() {
         return hashCode;
+    }
+
+    public static Integer getCurrentHashCode() {
+        return currentHashCode;
     }
 }

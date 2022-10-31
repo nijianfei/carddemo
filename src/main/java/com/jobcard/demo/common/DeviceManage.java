@@ -91,7 +91,6 @@ public class DeviceManage {
         String cardId = null;
         Map<String, String> cardInfo = taskBean.getParam();
         String userId = cardInfo.get("userId");
-        String userName = cardInfo.get("name");
         try {
             cardId = rd.readCardId();
             deviceNo = rd.getlDevice();
@@ -207,16 +206,15 @@ public class DeviceManage {
 
 
     private static void sendMsg(SoketResultVo srVo) {
-        Optional<WebSocket> first = WebSocket.webSocketMap.values().stream().findFirst();
-        first.ifPresent(ws -> {
-            if (ws.getHashCode().equals(srVo.sessionHashCode)) {
-                log.info("【发送Socket通知信息】：{}", JSONUtil.toJsonStr(Arrays.asList(srVo)));
-                ws.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
-            } else {
-                log.info("【发送Socket通知信息——源连接ws.getHashCode()：{}，现连接srVo.sessionHashCode：{}】不一致，跳过通知！！！ 内容：{}",
-                        ws.getHashCode(), srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
-            }
-        });
+        Integer currentHashCode = WebSocket.getCurrentHashCode();
+        if (currentHashCode.equals(srVo.sessionHashCode)) {
+            WebSocket webSocket = WebSocket.webSocketMap.get(currentHashCode);
+            log.info("【发送Socket通知信息】：{}", JSONUtil.toJsonStr(Arrays.asList(srVo)));
+            webSocket.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
+        }else{
+            log.info("【发送Socket通知信息——源连接 currentHashCode：{}，消息sessionHashCode：{}】不一致，跳过通知！！！ 内容：{}",
+                    currentHashCode, srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
+        }
     }
 
     public static void sleep(long time) {
