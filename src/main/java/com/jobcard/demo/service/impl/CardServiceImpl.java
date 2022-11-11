@@ -34,6 +34,8 @@ public class CardServiceImpl implements CardService {
     private String coreUrl;
     @Value("${isCheck}")
     private boolean isCheck;
+    @Value("${expectDeviceQty}")
+    private int expectDeviceQty;
 
     /**
      * 根据人员信息，制作电子卡
@@ -44,7 +46,7 @@ public class CardServiceImpl implements CardService {
     public void make(List<TaskBean> cardInfos) {
         log.info("CardServiceImpl_make_cardInfos.size:{},JSON:{}", cardInfos.size(), JSONUtil.toJsonStr(cardInfos));
         ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
-        DeviceManage.initDevice();
+        DeviceManage.initDevice(expectDeviceQty);
         log.info("将任务加入队列，任务队列数：{}", DeviceManage.taskQueueWait.size());
         cardInfos.forEach(c -> DeviceManage.taskQueueWait.addLast(c));
         TaskBean taskBean = null;
@@ -116,7 +118,7 @@ public class CardServiceImpl implements CardService {
                     String resultCode = String.valueOf(result);
                     return CoreCheckStateEnum.getEnumByCode(resultCode);
                 }
-                return CoreCheckStateEnum.S98;
+                return CoreCheckStateEnum.S99;
             } catch (Exception e) {
                 log.error("请求中台[{}]校验人卡信息异常_参数：{}，异常堆栈信息：-->", coreUrl, paramsStr, e);
                 return CoreCheckStateEnum.S98;

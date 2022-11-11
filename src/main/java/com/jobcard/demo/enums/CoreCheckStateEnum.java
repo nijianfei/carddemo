@@ -10,9 +10,9 @@ public enum CoreCheckStateEnum {
     S0("0", "正常",true),
     S1("1", "卡已绑定",false),
     S2("2", "人已发卡",false),
-    S3("3", "占用",false),
-    S98("98", "请求中台异常",false),
-    S99("99", "非法Code",false),
+//    S3("3", "占用",false),
+     S98("98", "请求后台异常",false),
+    S99("99", "后台异常Code",false),
     ;
     private String code;
     private String name;

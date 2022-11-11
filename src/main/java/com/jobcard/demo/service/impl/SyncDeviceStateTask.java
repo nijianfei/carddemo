@@ -9,15 +9,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class SyncDeviceStateTask {
     @Value("${syncLogShowRate}")
-    private  int syncLogShowRate ;
-    private static int syncLogShowRateTtatic = 1 ;
+    private int syncLogShowRate;
+    @Value("${expectDeviceQty}")
+    private int expectDeviceQty = 5;
+    private static int syncLogShowRateTtatic = 1;
+    private int initDeviceQty = -1;
 
 
     /**
@@ -26,9 +28,14 @@ public class SyncDeviceStateTask {
     @Scheduled(cron = "0/1 * * * * ?")
     public void update() {
         if (DeviceManage.deviceState.keySet().size() == 0 && !DeviceManage.isWord() && !DeviceManage.isInit() && !DeviceManage.isIsClean() && DeviceManage.taskQueueCurrent.size() == 0 && DeviceManage.taskQueueWait.size() == 0) {
-            DeviceManage.initDevice();
+            DeviceManage.initDevice(expectDeviceQty);
+            if(initDeviceQty <= 0){
+                initDeviceQty = DeviceManage.deviceState.keySet().size();
+            }
         } else if (DeviceManage.isWord() && DeviceManage.taskQueueWait.size() != 0 && DeviceManage.deviceState.keySet().size() == DeviceManage.deviceState.values().stream().filter(o -> Objects.equals(DeviceStateEnum.FREE, o.getStateEnum())).count()) {
-            DeviceManage.initDevice();
+            DeviceManage.initDevice(expectDeviceQty);
+        } else if (!DeviceManage.isInit() && !DeviceManage.isIsClean() && DeviceManage.deviceState.size() != initDeviceQty) {
+            DeviceManage.initDevice(expectDeviceQty);
         }
 
         Set<Integer> deviceNos = DeviceManage.deviceState.keySet();
@@ -68,17 +75,39 @@ public class SyncDeviceStateTask {
         }
         List<String> userId = DeviceManage.taskQueueWait.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         List<String> userIdCurrent = DeviceManage.taskQueueCurrent.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
-        if (syncLogShowRateTtatic -- <= 0) {
+        if (syncLogShowRateTtatic-- <= 0) {
             log.info(sb.toString());
-            log.info("\r\n\r\n任务状态:{},设备数量:{}，设备号:{}，socket连接数：{}\r\n 【待处理队列】剩余数:{},UserIdS:{}，\r\n 处理队列】剩余数:{}，UserIdS:{}\r\n", DeviceManage.isWord(), deviceNos.size(), getDeviceState(deviceNos),WebSocket.webSocketMap.size(), DeviceManage.taskQueueWait.size(), userId, DeviceManage.taskQueueCurrent.size(), userIdCurrent);
+            log.info("\r\n\r\n任务状态:{},设备数量:{}，设备号:{}，socket连接数：{}\r\n 【待处理队列】剩余数:{},UserIdS:{}，\r\n 处理队列】剩余数:{}，UserIdS:{}\r\n",
+                    DeviceManage.isWord(), deviceNos.size(), getDeviceState(deviceNos), WebSocket.webSocketMap.size(), DeviceManage.taskQueueWait.size(), userId,
+                    DeviceManage.taskQueueCurrent.size(), userIdCurrent);
             log.info("\r\n\r\ndeviceState.size():{},isWord():{},isInit():{},isIsClean()：{}，taskQueueCurrent.size()：{}，taskQueueWait.size():{}，WebSocket.webSocketMap.size():{}",
-                    DeviceManage.deviceState.keySet().size(), DeviceManage.isWord(), DeviceManage.isInit(), DeviceManage.isIsClean(), DeviceManage.taskQueueCurrent.size(), DeviceManage.taskQueueWait.size());
+                    DeviceManage.deviceState.keySet().size(), DeviceManage.isWord(), DeviceManage.isInit(), DeviceManage.isIsClean(), DeviceManage.taskQueueCurrent.size(),
+                    DeviceManage.taskQueueWait.size());
             syncLogShowRateTtatic = syncLogShowRate;
         }
 
     }
 
     private Object getDeviceState(Set<Integer> deviceNos) {
-        return deviceNos.stream().map(deviceNo -> String.join("-", String.valueOf(deviceNo), DeviceManage.deviceState.get(deviceNo).getStateEnum().getValue(), DeviceManage.deviceState.get(deviceNo).getStateEnum().getDetailMsg(), "LastCardNo:", DeviceManage.deviceState.get(deviceNo).getLastCardNo())).collect(Collectors.joining(","));
+        return deviceNos.stream().map(deviceNo -> String.join("-", String.valueOf(deviceNo), getDeviceStateByDeviceNo(deviceNo), "LastCardNo:", getLastCardNo(deviceNo))).collect(Collectors.joining(","));
+    }
+
+    private String getDeviceStateByDeviceNo(Integer deviceNo){
+        DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
+        if (Objects.nonNull(deviceState)) {
+            DeviceStateEnum stateEnum = deviceState.getStateEnum();
+            if (Objects.nonNull(stateEnum)) {
+                return stateEnum.getValue() + "-" + stateEnum.getDetailMsg();
+            }
+        }
+        return "";
+    }
+
+    private String getLastCardNo(Integer deviceNo){
+        DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
+        if (Objects.nonNull(deviceState)) {
+            return deviceState.getLastCardNo();
+        }
+        return "";
     }
 }

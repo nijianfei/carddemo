@@ -46,8 +46,6 @@ public class DeviceManage {
      */
     public static final Map<String, String> finishCardMap = new ConcurrentHashMap<>();
 
-    private static final int maxDeviceCount = 5;
-
     public static synchronized boolean isInit() {
         return isInit;
     }
@@ -56,11 +54,12 @@ public class DeviceManage {
         return isInit = init;
     }
 
-    public static synchronized void initDevice() {
+    public static synchronized void initDevice(int expectDeviceQty) {
         SetInit(true);
         sleep(1000);
-//        DeviceManage.deviceState.clear();
-        for (int i = 0; i < maxDeviceCount; i++) {
+        DeviceManage.deviceState.clear();
+        DeviceManage.readyQueue.clear();
+        for (int i = 0; i < expectDeviceQty; i++) {
             int deviceNo = 100 + i;
             JavaRD800 rd = new JavaRD800();
             int lDevice = rd.dc_init(deviceNo, 115200);
@@ -89,6 +88,7 @@ public class DeviceManage {
     public static void writeCard(JavaRD800 rd, TaskBean taskBean, CardServiceImpl cardServiceImpl) {
         Integer deviceNo = null;
         String cardId = null;
+        DeviceState deviceState = null;
         Map<String, String> cardInfo = taskBean.getParam();
         String userId = cardInfo.get("userId");
         try {
@@ -96,7 +96,11 @@ public class DeviceManage {
             deviceNo = rd.getlDevice();
             taskBean.setCardId(cardId);
             log.info("获取可用设备：{},读取卡号：{}", deviceNo, cardId);
-            DeviceManage.deviceState.get(deviceNo).setUserId(userId);
+            deviceState = DeviceManage.deviceState.get(deviceNo);
+            if (Objects.isNull(deviceState)) {
+                return;
+            }
+            deviceState.setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
             CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId);
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
@@ -118,36 +122,31 @@ public class DeviceManage {
                     sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.SUCC.getCode(), DeviceStateEnum.SUCC.getValue()));
                     return;
                 } else {
-                    DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                     deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(start.getMessage()));
                     log.info("写卡异常,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                     taskBean.setTaskState(TaskStateEnum.FAIL);
                     sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
                 }
             } else if (Objects.equals(CoreCheckStateEnum.S1.getCode(), coreCheckStateEnum.getCode())) {//卡已绑定，
-                DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S1.getName()));
                 deviceState.setLastCardNo(cardId);
                 log.info("写卡异常（卡已绑定）,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             } else if (Objects.equals(CoreCheckStateEnum.S2.getCode(), coreCheckStateEnum.getCode())) {//人已发卡,通知失败，跳过任务
-                DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S2.getName()));
                 deviceState.setLastCardNo(cardId);
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
                 return;
-            } else if (Objects.equals(CoreCheckStateEnum.S3.getCode(), coreCheckStateEnum.getCode())) {//占用
-                taskBean.setTaskState(TaskStateEnum.RETRY);
-                DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
-                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S3.getName()));
+            } else  {//后台check异常
+                taskBean.setTaskState(TaskStateEnum.FAIL);
+                deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.getEnumByCode(coreCheckStateEnum.getCode()).getName()));
                 deviceState.setLastCardNo(cardId);
                 sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             }
         } catch (Exception e) {
             log.error("工号：{}，写卡异常-->", cardInfo.get("userId"), e);
-            DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
             deviceState.setStateEnum(DeviceStateEnum.FAIL);
             taskBean.setTaskState(TaskStateEnum.FAIL);
             sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
@@ -233,11 +232,11 @@ public class DeviceManage {
         return false;
     }
 
-    public static boolean isIsClean() {
+    public synchronized static boolean isIsClean() {
         return isClean;
     }
 
-    public static void setIsClean(boolean isClean) {
+    public synchronized static void setIsClean(boolean isClean) {
         DeviceManage.isClean = isClean;
     }
 
