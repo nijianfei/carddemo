@@ -135,7 +135,13 @@ public class JavaRD800 {
     }
 
     public String readCardId() {
-        initDevice();
+        int tryCount = 3;
+        while (initDevice() < 0 && tryCount-- >0) {
+            DeviceManage.sleep(500);
+        }
+        if (initDevice() < 0) {
+            return "-1";
+        }
         long cardNum;
         int[] pSnr = new int[20];
         if (this.dc_card(this.getlDevice(), (short) 0, pSnr) != 0) {
@@ -170,14 +176,15 @@ public class JavaRD800 {
         if (lDevice <= 0) {
             short dcexitResult = this.dc_exit(lDevice);
             System.out.println("打开读卡器端口失败!" + deviceNo);
-            log.info("设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+            log.error("设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+            return lDevice;
         }
         short resetResult = this.dc_reset(lDevice, 1);
         log.info("设备dc_reset，deviceNo：{},lDevice：{}，返回结果resetResult：{},重置设备：{}", deviceNo, lDevice, resetResult, resetResult == 0);
         if (resetResult != 0) {
             System.out.print(String.format("dc_reset error! %s\n", deviceNo));
             short dcexitResult = this.dc_exit(lDevice);
-            log.info("设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+            log.error("设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
         }
         this.lDevice = lDevice;
         return lDevice;

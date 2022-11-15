@@ -2,6 +2,7 @@ package com.jobcard.demo.enums;
 
 //execStatusCls：  0开始刷卡 1刷卡成功 2 刷卡失败
 public enum DeviceStateEnum {
+    EXCEPTION("-3","读卡异常",""),
     FREE("-2","空闲",""),
     READY("-1","就緒",""),
     BUSY("0","开始刷卡",""),

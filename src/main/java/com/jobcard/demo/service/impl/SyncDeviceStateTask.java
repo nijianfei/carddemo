@@ -30,7 +30,7 @@ public class SyncDeviceStateTask {
         if (!DeviceManage.getSetSynStatus(true)) {
             return;
         }
-        while (!DeviceManage.deviceState.keySet().contains(180) ) {
+        while (!DeviceManage.deviceState.keySet().contains(180)) {
             initDevice();
             DeviceManage.sleep(500);
         }
@@ -53,12 +53,16 @@ public class SyncDeviceStateTask {
             String sourceState = deviceState.getStateEnum().getValue();
             String lastCardNo = deviceState.getLastCardNo();
             String cardId = "0";
-                    switch (deviceState.getStateEnum()) {
+            switch (deviceState.getStateEnum()) {
                 case SUCC:
                 case FAIL:
                 case FREE:
                 case READY:
+                case EXCEPTION:
                     cardId = deviceState.getRd().readCardId();
+                    if (Objects.equals(cardId, "-1")) {//卡号为-1，读卡异常
+                        deviceState.setStateEnum(DeviceStateEnum.EXCEPTION);
+                    }
                     if (Objects.equals(cardId, "0")) {//卡号为0，代表设备上无卡片，设置设备为空闲状态
                         deviceState.setStateEnum(DeviceStateEnum.FREE);
                         DeviceManage.readyQueue.remove(deviceState.getRd());
@@ -71,9 +75,9 @@ public class SyncDeviceStateTask {
                     }
                     break;
             }
-            sb.append(String.format("\r\n设备号:%s,状态:%s(L %s) -> %s(%s)", deviceNo, sourceState,deviceState.getLastCardNo(), deviceState.getStateEnum().getValue(),cardId));
+            sb.append(String.format("\r\n设备号:%s,状态:%s(L %s) -> %s(%s)", deviceNo, sourceState, deviceState.getLastCardNo(), deviceState.getStateEnum().getValue(), cardId));
         }
-         List<String> userId = DeviceManage.taskQueueWait.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
+        List<String> userId = DeviceManage.taskQueueWait.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         List<String> userIdCurrent = DeviceManage.taskQueueCurrent.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         if (syncLogShowRateTtatic-- <= 0) {
             log.info(sb.toString());

@@ -62,13 +62,13 @@ public class CardServiceImpl implements CardService {
                     DeviceManage.sleep(500);
                     continue;
                 }
-                DeviceManage.deviceState.get(rd.getlDevice()).setStateEnum(DeviceStateEnum.BUSY);
-                if (WebSocket.isTryStart()) {
-                    DeviceManage.taskQueueWait.clear();
+                if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
                     DeviceManage.sleep(500);
                     continue;
                 }
-                if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
+                DeviceManage.deviceState.get(rd.getlDevice()).setStateEnum(DeviceStateEnum.BUSY);
+                if (WebSocket.isTryStart()) {
+                    DeviceManage.taskQueueWait.clear();
                     DeviceManage.sleep(500);
                     continue;
                 }

@@ -80,12 +80,11 @@ public class CardReader {
         writeTag(imageData);
         Date endDate = new Date();
         System.out.println("写卡计时结束：" + DateUtil.formatDateTime(endDate) + "  历时秒：" + (endDate.getTime() - startDate.getTime()) * 0.001);
-//        CardReader.dcExit(this.rd);
+        CardReader.dcExit(this.rd);
         return transStatus;
     }
 
     private static synchronized void dcExit(JavaRD800 rd) {
-
         rd.dcExit();
     }
 
