@@ -40,7 +40,7 @@ public class CardServiceImpl implements CardService {
     /**
      * 根据人员信息，制作电子卡
      *
-     * @param cardInfos       卡信息
+     * @param cardInfos 卡信息
      * @return
      */
     public void make(List<TaskBean> cardInfos) {
