@@ -14,17 +14,21 @@ import com.jobcard.demo.util.CardReader;
 import com.jobcard.demo.util.TemplateAdapter;
 import dcrf.JavaRD800;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
-@Slf4j
 public class DeviceManage {
+    private static Logger log = LoggerFactory.getLogger(DeviceManage.class);
     private static boolean isInit = false;
     private static boolean isClean = false;
     private static boolean isWord = false;
+
+    private static boolean synStatus = false;
     /**
      * 任务等待队列
      */
@@ -54,27 +58,47 @@ public class DeviceManage {
         return isInit = init;
     }
 
+    public static synchronized boolean isSynStatus() {
+        return synStatus;
+    }
+
+    public static synchronized void setSynStatus(boolean synStatus) {
+            DeviceManage.synStatus = synStatus;
+    }
+    public static synchronized boolean getSetSynStatus(boolean synStatus) {
+        if (!isSynStatus()) {
+            DeviceManage.synStatus = synStatus;
+            return true;
+        }
+        return false;
+    }
+
     public static synchronized void initDevice(int expectDeviceQty) {
         SetInit(true);
         sleep(1000);
+        DeviceManage.deviceState.keySet().forEach(key->{
+            JavaRD800 rd = DeviceManage.deviceState.get(key).getRd();
+            rd.dc_exit(rd.getlDevice());
+        });
         DeviceManage.deviceState.clear();
         DeviceManage.readyQueue.clear();
         for (int i = 0; i < expectDeviceQty; i++) {
-            int deviceNo = 100 + i;
+            Integer deviceNo = 100 + i;
             JavaRD800 rd = new JavaRD800();
-            int lDevice = rd.dc_init(deviceNo, 115200);
+            Integer lDevice = rd.dc_init(deviceNo, 115200);
             if (lDevice <= 0) {
-                System.out.println("打开读卡器端口失败!" + deviceNo);
-                continue;
-            } else {
-                System.out.print(String.format("dc_init ok! %s\n", deviceNo));
-            }
-            if (rd.dc_reset(lDevice, 1) != 0) {
-                System.out.print(String.format("dc_reset error! %s\n", deviceNo));
+                log.error("打开读卡器端口失败! {}" , deviceNo);
+//                System.out.println("打开读卡器端口失败!" + deviceNo);
                 rd.dc_exit(lDevice);
                 continue;
             }
-            System.out.print(String.format("dc_reset ok! %s\n", deviceNo));
+            if (rd.dc_reset(lDevice, 1) != 0) {
+                log.error("dc_reset error! {}" , deviceNo);
+//                System.out.print(String.format("dc_reset error! %s\n", deviceNo));
+                rd.dc_exit(lDevice);
+                continue;
+            }
+//            System.out.print(String.format("dc_reset ok! %s\n", deviceNo));
             rd.setlDevice(lDevice);
             rd.setDeviceNo(deviceNo);
             DeviceState deviceState = new DeviceState();

@@ -41,7 +41,7 @@ public class CardReader {
         long cardNum;
         int[] pSnr = new int[20];
         if (this.rd.dc_card(this.lDevice, (short) 0, pSnr) != 0) {
-            System.out.print(this.getClass().getSimpleName()+"_readCardId_dc_card error!\n");
+            System.out.print(this.getClass().getSimpleName() + "_readCardId_dc_card error!\n");
             this.transStatus.notifyMessage("卡片初始化失败");
             this.rd.dc_exit(this.lDevice);
             return transStatus;
@@ -76,17 +76,17 @@ public class CardReader {
         this.transStatus.notifyMessage("数据传输中");
         //写卡
         Date startDate = new Date();
-        System.out.println("写卡计时开始："+ DateUtil.formatDateTime(startDate));
+        System.out.println("写卡计时开始：" + DateUtil.formatDateTime(startDate));
         writeTag(imageData);
         Date endDate = new Date();
-        System.out.println("写卡计时结束："+ DateUtil.formatDateTime(endDate)+"  历时秒："+ (endDate.getTime()-startDate.getTime())*0.001);
-        if (this.rd.dc_exit(this.lDevice) != 0) {
-            System.out.print("dc_exit error!\n");
-            this.rd.dc_exit(this.lDevice);
-            return transStatus;
-        }
-        System.out.print("dc_exit ok!\n");
+        System.out.println("写卡计时结束：" + DateUtil.formatDateTime(endDate) + "  历时秒：" + (endDate.getTime() - startDate.getTime()) * 0.001);
+//        CardReader.dcExit(this.rd);
         return transStatus;
+    }
+
+    private static synchronized void dcExit(JavaRD800 rd) {
+
+        rd.dcExit();
     }
 
     private char[] hexToChar(String hex) throws IllegalArgumentException {
@@ -182,7 +182,7 @@ public class CardReader {
             if (!(result[0] == 144 && result[1] == 0)) {
                 return false;
             }
-            System.out.println("ok");
+//            System.out.println("ok");
         }
         return true;
     }
@@ -192,8 +192,8 @@ public class CardReader {
         char[] datasw = new char[3];
         System.out.println("发送刷图命令");
         this.rd.dc_pro_command(this.lDevice, (short) refreshcmd.length, refreshcmd, new short[1], datasw, (short) 100);
-        System.out.println((int) datasw[0]);
-        System.out.println((int) datasw[1]);
+//        System.out.println((int) datasw[0]);
+//        System.out.println((int) datasw[1]);
         if (datasw[0] == 144) {
             getRefreshResult();
             return true;

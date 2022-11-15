@@ -27,17 +27,16 @@ public class SyncDeviceStateTask {
      */
     @Scheduled(cron = "0/1 * * * * ?")
     public void update() {
-        if (DeviceManage.deviceState.keySet().size() == 0 && !DeviceManage.isWord() && !DeviceManage.isInit() && !DeviceManage.isIsClean() && DeviceManage.taskQueueCurrent.size() == 0 && DeviceManage.taskQueueWait.size() == 0) {
-            DeviceManage.initDevice(expectDeviceQty);
-            if(initDeviceQty <= 0){
-                initDeviceQty = DeviceManage.deviceState.keySet().size();
-            }
-        } else if (DeviceManage.isWord() && DeviceManage.taskQueueWait.size() != 0 && DeviceManage.deviceState.keySet().size() == DeviceManage.deviceState.values().stream().filter(o -> Objects.equals(DeviceStateEnum.FREE, o.getStateEnum())).count()) {
-            DeviceManage.initDevice(expectDeviceQty);
-        } else if (!DeviceManage.isInit() && !DeviceManage.isIsClean() && DeviceManage.deviceState.size() != initDeviceQty) {
-            DeviceManage.initDevice(expectDeviceQty);
+        if (!DeviceManage.getSetSynStatus(true)) {
+            return;
         }
-
+        while (!DeviceManage.deviceState.keySet().contains(180) ) {
+            initDevice();
+            DeviceManage.sleep(500);
+        }
+        if (!DeviceManage.isWord()) {
+            initDevice();
+        }
         Set<Integer> deviceNos = DeviceManage.deviceState.keySet();
         StringBuilder sb = new StringBuilder();
         for (Integer deviceNo : deviceNos) {
@@ -53,12 +52,13 @@ public class SyncDeviceStateTask {
             }
             String sourceState = deviceState.getStateEnum().getValue();
             String lastCardNo = deviceState.getLastCardNo();
-            switch (deviceState.getStateEnum()) {
+            String cardId = "0";
+                    switch (deviceState.getStateEnum()) {
                 case SUCC:
                 case FAIL:
                 case FREE:
                 case READY:
-                    String cardId = deviceState.getRd().readCardId();
+                    cardId = deviceState.getRd().readCardId();
                     if (Objects.equals(cardId, "0")) {//卡号为0，代表设备上无卡片，设置设备为空闲状态
                         deviceState.setStateEnum(DeviceStateEnum.FREE);
                         DeviceManage.readyQueue.remove(deviceState.getRd());
@@ -71,9 +71,9 @@ public class SyncDeviceStateTask {
                     }
                     break;
             }
-            sb.append(String.format("\r\n设备号:%s,状态:%s -> %s", deviceNo, sourceState, deviceState.getStateEnum().getValue()));
+            sb.append(String.format("\r\n设备号:%s,状态:%s(L %s) -> %s(%s)", deviceNo, sourceState,deviceState.getLastCardNo(), deviceState.getStateEnum().getValue(),cardId));
         }
-        List<String> userId = DeviceManage.taskQueueWait.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
+         List<String> userId = DeviceManage.taskQueueWait.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         List<String> userIdCurrent = DeviceManage.taskQueueCurrent.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         if (syncLogShowRateTtatic-- <= 0) {
             log.info(sb.toString());
@@ -85,14 +85,27 @@ public class SyncDeviceStateTask {
                     DeviceManage.taskQueueWait.size());
             syncLogShowRateTtatic = syncLogShowRate;
         }
+        DeviceManage.setSynStatus(false);
+    }
 
+    private void initDevice() {
+        if (!DeviceManage.isWord() && !DeviceManage.isInit() && !DeviceManage.isIsClean() && DeviceManage.taskQueueCurrent.size() == 0 && DeviceManage.taskQueueWait.size() == 0) {
+            DeviceManage.initDevice(expectDeviceQty);
+            if (initDeviceQty <= 0) {
+                initDeviceQty = DeviceManage.deviceState.keySet().size();
+            }
+        } else if (DeviceManage.isWord() && DeviceManage.taskQueueWait.size() != 0 && DeviceManage.deviceState.keySet().size() == DeviceManage.deviceState.values().stream().filter(o -> Objects.equals(DeviceStateEnum.FREE, o.getStateEnum())).count()) {
+            DeviceManage.initDevice(expectDeviceQty);
+        } else if (!DeviceManage.isInit() && !DeviceManage.isIsClean() && DeviceManage.deviceState.size() != initDeviceQty) {
+            DeviceManage.initDevice(expectDeviceQty);
+        }
     }
 
     private Object getDeviceState(Set<Integer> deviceNos) {
         return deviceNos.stream().map(deviceNo -> String.join("-", String.valueOf(deviceNo), getDeviceStateByDeviceNo(deviceNo), "LastCardNo:", getLastCardNo(deviceNo))).collect(Collectors.joining(","));
     }
 
-    private String getDeviceStateByDeviceNo(Integer deviceNo){
+    private String getDeviceStateByDeviceNo(Integer deviceNo) {
         DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
         if (Objects.nonNull(deviceState)) {
             DeviceStateEnum stateEnum = deviceState.getStateEnum();
@@ -103,7 +116,7 @@ public class SyncDeviceStateTask {
         return "";
     }
 
-    private String getLastCardNo(Integer deviceNo){
+    private String getLastCardNo(Integer deviceNo) {
         DeviceState deviceState = DeviceManage.deviceState.get(deviceNo);
         if (Objects.nonNull(deviceState)) {
             return deviceState.getLastCardNo();

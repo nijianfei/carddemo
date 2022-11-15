@@ -29,21 +29,21 @@ public class TemplateAdapter {
     private TemplateAdapter(){}
     public static TemplateAdapter setTemplate(String styleData) throws IOException {
         TemplateAdapter adapter = new TemplateAdapter();
-        System.out.println("字符长度：" + styleData.length());
+//        System.out.println("字符长度：" + styleData.length());
         byte[] bytes = Base64.getDecoder().decode(styleData);
         String decode = new String(bytes);
-        System.out.println("总数据长度：" + bytes.length);
+//        System.out.println("总数据长度：" + bytes.length);
         System.out.println(bytes[0]);
         System.out.println(bytes[1]);
         System.out.println(bytes[2]);
         System.out.println(bytes[3]);
         int picLen = ((bytes[0] & 255) << 24) | ((bytes[1] & 255) << 16) | ((bytes[2] & 255) << 8) | (bytes[3] & 255);
-        System.out.println("图片长度：" + picLen);
+//        System.out.println("图片长度：" + picLen);
         byte[] picBytes = Arrays.copyOfRange(bytes, 4, picLen + 4);
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(picBytes);
         adapter.background = ImageIO.read(arrayInputStream);
         arrayInputStream.close();
-        System.out.println("图片长度：" + picBytes.length);
+//        System.out.println("图片长度：" + picBytes.length);
         String blockStr = new String(Arrays.copyOfRange(bytes, picLen + 4, bytes.length), StandardCharsets.UTF_8);
 //        System.out.println(blockStr);
         adapter.blockList = adapter.gson.fromJson(blockStr, adapter.type);

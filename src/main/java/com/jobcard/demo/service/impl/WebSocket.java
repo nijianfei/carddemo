@@ -100,7 +100,7 @@ public class WebSocket {
     /**
      * 向客户端发送消息
      */
-    public void sendMessage(String message) {
+    public synchronized void sendMessage(String message) {
         try {
             this.session.getBasicRemote().sendText(message);
             //this.session.getAsyncRemote().sendText(message);
@@ -160,28 +160,6 @@ public class WebSocket {
         error.printStackTrace();
     }
 
-
-    /**
-     * 通过userId向客户端发送消息
-     */
-    public void sendMessageByUserId(String userId, String message) throws IOException {
-        log.info("服务端发送消息到{},消息：{}", userId, message);
-        if (StrUtil.isNotBlank(userId) && webSocketMap.containsKey(userId)) {
-            webSocketMap.get(userId).sendMessage(message);
-        } else {
-            log.error("用户{}不在线", userId);
-        }
-
-    }
-
-    /**
-     * 群发自定义消息
-     */
-    public static void sendInfo(String message) throws IOException {
-        for (Integer item : webSocketMap.keySet()) {
-            webSocketMap.get(item).sendMessage(message);
-        }
-    }
 
     public static synchronized int getOnlineCount() {
         return onlineCount;
