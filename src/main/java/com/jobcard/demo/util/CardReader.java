@@ -1,14 +1,15 @@
 package com.jobcard.demo.util;
 
 import cn.hutool.core.date.DateUtil;
-import com.jobcard.demo.service.impl.WebSocket;
 import dcrf.JavaRD800;
+import lombok.extern.slf4j.Slf4j;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 public class CardReader {
     private int lDevice = 0;
     private JavaRD800 rd;
@@ -41,13 +42,13 @@ public class CardReader {
         long cardNum;
         int[] pSnr = new int[20];
         if (this.rd.dc_card(this.lDevice, (short) 0, pSnr) != 0) {
-            System.out.print(this.getClass().getSimpleName() + "_readCardId_dc_card error!\n");
+            log.error("lDevice:{},dc_card异常",this.lDevice);
             this.transStatus.notifyMessage("卡片初始化失败");
             this.rd.dc_exit(this.lDevice);
             return transStatus;
         }
-        System.out.print("dc_card ok!\n");
-        System.out.println("cardnum:" + pSnr[0]);
+//        System.out.print("dc_card ok!\n");
+//        System.out.println("cardnum:" + pSnr[0]);
         if (pSnr[0] < 0) {
             cardNum = -(-4294967296L - ((long) pSnr[0]));
         } else {
@@ -76,10 +77,9 @@ public class CardReader {
         this.transStatus.notifyMessage("数据传输中");
         //写卡
         Date startDate = new Date();
-        System.out.println("写卡计时开始：" + DateUtil.formatDateTime(startDate));
         writeTag(imageData);
         Date endDate = new Date();
-        System.out.println("写卡计时结束：" + DateUtil.formatDateTime(endDate) + "  历时秒：" + (endDate.getTime() - startDate.getTime()) * 0.001);
+        log.info("卡号：{},写卡计时开始：{}，写卡计时结束：{},历时秒：{}",cardId,DateUtil.formatDateTime(startDate), DateUtil.formatDateTime(endDate) , (endDate.getTime() - startDate.getTime()) * 0.001);
         CardReader.dcExit(this.rd);
         return transStatus;
     }

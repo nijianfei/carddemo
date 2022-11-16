@@ -136,21 +136,20 @@ public class JavaRD800 {
 
     public String readCardId() {
         int tryCount = 3;
-        while (initDevice() < 0 && tryCount-- >0) {
+        while (initDevice() < 0 && tryCount-- > 0) {
             DeviceManage.sleep(500);
         }
         if (initDevice() < 0) {
+            log.error("设备 initDevice，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, "-1");
             return "-1";
         }
         long cardNum;
         int[] pSnr = new int[20];
         if (this.dc_card(this.getlDevice(), (short) 0, pSnr) != 0) {
-            System.out.print(this.getClass().getSimpleName() + "_readCardId_dc_card error!\n");
+            log.error("lDevice:{}, readCardId_dc_card error!", lDevice);
+            System.out.print(this.getClass().getSimpleName() + "\n");
             this.dc_exit(this.getlDevice());
         }
-//        this.dc_exit(this.getlDevice());
-//        System.out.print("dc_card ok!\n");
-//        System.out.println("cardnum:" + pSnr[0]);
         if (pSnr[0] < 0) {
             cardNum = -(-4294967296L - ((long) pSnr[0]));
         } else {
@@ -172,15 +171,15 @@ public class JavaRD800 {
 
     public int initDevice() {
         int lDevice = this.dc_init(deviceNo, 115200);
-        log.info("设备dc_init，deviceNo：{},返回结果lDevice：{},打开读卡器端口:{}", deviceNo, lDevice, lDevice > 0);
+        log.debug("设备dc_init，deviceNo：{},返回结果lDevice：{},打开读卡器端口:{}", deviceNo, lDevice, lDevice > 0);
         if (lDevice <= 0) {
             short dcexitResult = this.dc_exit(lDevice);
-            System.out.println("打开读卡器端口失败!" + deviceNo);
-            log.error("设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+//            System.out.println("打开读卡器端口失败!" + deviceNo);
+            log.error("打开读卡器端口失败!设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
             return lDevice;
         }
         short resetResult = this.dc_reset(lDevice, 1);
-        log.info("设备dc_reset，deviceNo：{},lDevice：{}，返回结果resetResult：{},重置设备：{}", deviceNo, lDevice, resetResult, resetResult == 0);
+        log.debug("设备dc_reset，deviceNo：{},lDevice：{}，返回结果resetResult：{},重置设备：{}", deviceNo, lDevice, resetResult, resetResult == 0);
         if (resetResult != 0) {
             System.out.print(String.format("dc_reset error! %s\n", deviceNo));
             short dcexitResult = this.dc_exit(lDevice);
