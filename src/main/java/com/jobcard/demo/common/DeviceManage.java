@@ -13,12 +13,13 @@ import com.jobcard.demo.service.impl.WebSocket;
 import com.jobcard.demo.util.CardReader;
 import com.jobcard.demo.util.TemplateAdapter;
 import dcrf.JavaRD800;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -126,7 +127,7 @@ public class DeviceManage {
             }
             deviceState.setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
-            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId);
+            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId,cardInfo.get("buildingId"));
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
             //通知开始写卡
             sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
