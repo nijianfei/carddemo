@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.beust.jcommander.internal.Maps;
 import com.jobcard.demo.DemoApplication;
+import com.jobcard.demo.bean.CoreResultBean;
 import com.jobcard.demo.bean.TaskBean;
 import com.jobcard.demo.common.DeviceManage;
 import com.jobcard.demo.enums.CoreCheckStateEnum;
@@ -114,8 +115,11 @@ public class CardServiceImpl implements CardService {
                 Object invokeRes = JSONUtil.parseObj(post).get("invokeRes");
                 JSONObject entries = JSONUtil.parseObj(invokeRes);
                 if ("70".equals(invokeCls)) {
-                    Object result = JSONUtil.parseObj(entries).get("result");
-                    String resultCode = String.valueOf(result);
+                    CoreResultBean coreResultBean = JSONUtil.toBean(entries.toString(), CoreResultBean.class);
+                    String resultCode = coreResultBean.getResult();
+                    if (CoreCheckStateEnum.S2.getCode().equals(resultCode) && Objects.equals(coreResultBean.getCardId(),userId)) {
+                        return CoreCheckStateEnum.S0;
+                    }
                     return CoreCheckStateEnum.getEnumByCode(resultCode);
                 }
                 return CoreCheckStateEnum.S99;
