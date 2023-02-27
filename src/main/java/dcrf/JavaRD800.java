@@ -146,8 +146,7 @@ public class JavaRD800 {
         long cardNum;
         int[] pSnr = new int[20];
         if (this.dc_card(this.getlDevice(), (short) 0, pSnr) != 0) {
-            log.error("lDevice:{}, readCardId_dc_card error!", lDevice);
-            System.out.print(this.getClass().getSimpleName() + "\n");
+//            log.error("lDevice:{}, readCardId_dc_card error （无卡片）!", lDevice);
             this.dc_exit(this.getlDevice());
         }
         if (pSnr[0] < 0) {
@@ -157,7 +156,7 @@ public class JavaRD800 {
         }
         String cardId = String.valueOf(cardNum);
         log.info("设备dc_card，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, cardId);
-        this.dcExit();
+//        this.dcExit();
         return cardId;
     }
 
