@@ -117,9 +117,6 @@ public class CardServiceImpl implements CardService {
                 if ("70".equals(invokeCls)) {
                     CoreResultBean coreResultBean = JSONUtil.toBean(entries.toString(), CoreResultBean.class);
                     String resultCode = coreResultBean.getResult();
-                    if (CoreCheckStateEnum.S2.getCode().equals(resultCode) && Objects.equals(coreResultBean.getCardId(),userId)) {
-                        return CoreCheckStateEnum.S0;
-                    }
                     return CoreCheckStateEnum.getEnumByCode(resultCode);
                 }
                 return CoreCheckStateEnum.S99;
