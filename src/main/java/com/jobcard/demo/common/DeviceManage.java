@@ -148,14 +148,14 @@ public class DeviceManage {
                     return;
                 } else {
                     deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(start.getMessage()));
-                    log.info("写卡异常,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
+                    log.error("写卡异常,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                     taskBean.setTaskState(TaskStateEnum.FAIL);
                     sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), DeviceStateEnum.FAIL.getValue()));
                 }
             } else if (Objects.equals(CoreCheckStateEnum.S1.getCode(), coreCheckStateEnum.getCode())) {//卡已绑定，
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.S1.getName()));
                 deviceState.setLastCardNo(cardId);
-                log.info("写卡异常（卡已绑定）,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
+                log.error("写卡异常（卡已绑定）,将失败任务重新加入任务队列:{}", JSONUtil.toJsonStr(taskBean));
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
             } else if (Objects.equals(CoreCheckStateEnum.S2.getCode(), coreCheckStateEnum.getCode())) {//人已发卡,通知失败，跳过任务
@@ -163,7 +163,7 @@ public class DeviceManage {
                 deviceState.setLastCardNo(cardId);
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
-                return;
+//                return;
             } else  {//后台check异常
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.getEnumByCode(coreCheckStateEnum.getCode()).getName()));
