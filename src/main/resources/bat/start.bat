@@ -1,0 +1,1 @@
+start bin\jre1.8.0_261\bin\java.exe -jar demo-0.0.1-SNAPSHOT.jar
