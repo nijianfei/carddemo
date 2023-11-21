@@ -16,6 +16,7 @@ import dcrf.JavaRD800;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import java.util.Objects;
 
 @Slf4j
 @Service
+@PropertySource(value = "classpath:card.properties", encoding = "UTF-8")
 public class CardServiceImpl implements CardService {
     @Value("#{${cardTemplateMap}}")
     private Map<String, String> cardTempletMap;

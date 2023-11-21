@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.jobcard.demo.bean.CustomBlock;
 import com.jobcard.demo.bean.TempleteBean;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -25,8 +26,12 @@ public class TemplateAdapter {
     private List<CustomBlock> blockList;
     private final Gson gson = new Gson();
     //序列化相关
-    private final Type type = new TypeToken<List<CustomBlock>>() {}.getType();
-    private TemplateAdapter(){}
+    private final Type type = new TypeToken<List<CustomBlock>>() {
+    }.getType();
+
+    private TemplateAdapter() {
+    }
+
     public static TemplateAdapter setTemplate(String styleData) throws IOException {
         TemplateAdapter adapter = new TemplateAdapter();
         TempleteBean templeteBean = JSONUtil.toBean(styleData, TempleteBean.class);
@@ -41,6 +46,7 @@ public class TemplateAdapter {
     }
 
     public BufferedImage getImage(Map<String, String> map) {
+        //分辨率：240x416
         BufferedImage image = this.background;
 //        BufferedImage image = copyImage(this.background);
         int width = image.getWidth();
@@ -64,8 +70,8 @@ public class TemplateAdapter {
                     float fontSize = customBlock.getFontSize();
 //                    Font.BOLD
                     graphics.setFont(new Font(fontName, fontStyle, (int) fontSize).deriveFont(fontSize * 1.3f));
-//                    graphics.setColor(new Color(customBlock.getColor()));
-                    graphics.setColor(new Color(0));
+                    graphics.setColor(new Color(customBlock.getColor()));
+//                    graphics.setColor(new Color(0));
 
                     //字体规格
                     FontMetrics fontMetrics = graphics.getFontMetrics();
@@ -114,5 +120,13 @@ public class TemplateAdapter {
         graphics.drawImage(image, 0, 0, (ImageObserver) null);
         graphics.dispose();
         return bufferedImage;
+    }
+
+    public void addBlock(CustomBlock customBlock) {
+        blockList.add(customBlock);
+    }
+
+    public List<CustomBlock> getBlockList() {
+        return blockList;
     }
 }
