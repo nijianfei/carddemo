@@ -104,6 +104,20 @@
 			<artifactId>com-google-guava</artifactId>
 			<version>RELEASE113</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.luaj/luaj-jse -->
+		<dependency>
+			<groupId>org.luaj</groupId>
+			<artifactId>luaj-jse</artifactId>
+			<version>3.0.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.groovy/groovy-json -->
+		<dependency>
+			<groupId>org.apache.groovy</groupId>
+			<artifactId>groovy-json</artifactId>
+			<version>4.0.15</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
