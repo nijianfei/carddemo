@@ -156,7 +156,8 @@ public class DefaultTemplateBean {
     }
 
     public String getFloorNames() {
-        return StringUtils.isNotBlank(floorNames) && floorNames.length() > 20 ? floorNames.substring(0,20):floorNames;
+//        return StringUtils.isNotBlank(floorNames) && floorNames.length() > 20 ? floorNames.substring(0,20):floorNames;
+        return floorNames;
     }
 
     public void setFloorNames(String floorNames) {
