@@ -56,8 +56,8 @@ public class DemoApplication {
                 "  'visitReason1': '行人来访中信',\n" +
                 "  'userId': 'CSC123456',\n" +
                 "  'name': '刘军熹',\n" +
-                "  'buildName': '中信大厦',\n" +
-                "  'floorName': '59F 76F-78F 79F-81F',\n" +
+                "  'buildingName': '中信大厦',\n" +
+                "  'floorNames': '59F 76F-78F 79F-81F',\n" +
                 "  'company': '北京奥普杰特科技发...',\n" +
                 "  'depart': '信息技术部',\n" +
                 "  'visitorTypeCls': '02'\n" +

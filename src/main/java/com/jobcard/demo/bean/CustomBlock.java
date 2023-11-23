@@ -26,6 +26,10 @@ public class CustomBlock {
     //元素坐标Y
     private int y;
 
+    private int contentWidth;
+
+    private String beforeBlockName;
+
     public String getContent() {
         return this.content;
     }
@@ -120,5 +124,21 @@ public class CustomBlock {
 
     public void setLayout(int layout2) {
         this.layout = layout2;
+    }
+
+    public int getContentWidth() {
+        return contentWidth;
+    }
+
+    public void setContentWidth(int contentWidth) {
+        this.contentWidth = contentWidth;
+    }
+
+    public String getBeforeBlockName() {
+        return beforeBlockName;
+    }
+
+    public void setBeforeBlockName(String beforeBlockName) {
+        this.beforeBlockName = beforeBlockName;
     }
 }

@@ -15,10 +15,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Base64;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,28 +58,30 @@ public class TemplateAdapter {
         //消除画图锯齿
 //        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         Map<String,CustomBlock> blockMap = blockList.stream().collect(Collectors.toMap(CustomBlock::getName, Function.identity()));
-        Optional.ofNullable(blockMap.get("buildingName")).ifPresent(bb->{
-            if (StringUtils.isNotBlank(map.get("buildingName")) && map.get("buildingName").length()>4) {
-                Optional.ofNullable(blockMap.get("floorNames")).ifPresent(fb->{
-                    fb.setX(fb.getX() + 13);
-                });
-            }
-        });
+//        Optional.ofNullable(blockMap.get("buildingName")).ifPresent(bb->{
+//            if (StringUtils.isNotBlank(map.get("buildingName")) && map.get("buildingName").length()>4) {
+//                Optional.ofNullable(blockMap.get("floorNames")).ifPresent(fb->{
+//                    fb.setX(fb.getX() + 13);
+//                });
+//            }
+//        });
 
         for (CustomBlock customBlock : this.blockList) {
             try {
-                int type2 = customBlock.getType();
+                int type2 = customBlock.getType();//快类型  0：文字
                 String blockName = customBlock.getName();
                 String blockContent = map.get(blockName);
-                int x = customBlock.getX();
-                int y = customBlock.getY();
+                int x = customBlock.getX();//块x坐标
+                int y = customBlock.getY();//块y坐标
                 int layout = customBlock.getLayout();
                 if (type2 == 0) {
-                    String fontName = customBlock.getFont();
-                    int fontStyle = customBlock.getFontStyle();
-                    float fontSize = customBlock.getFontSize();
+                    String fontName = customBlock.getFont();//字体名称
+                    int fontStyle = customBlock.getFontStyle();//文字风格:加粗 斜体
+                    float fontSize = customBlock.getFontSize();//字体大小
 //                    Font.BOLD
+                    //指定 字体 是否加粗 大小
                     graphics.setFont(new Font(fontName, fontStyle, (int) fontSize).deriveFont(fontSize * 1.3f));
+                    //指定字体颜色
                     graphics.setColor(new Color(customBlock.getColor()));
 //                    graphics.setColor(new Color(0));
 
@@ -89,6 +89,13 @@ public class TemplateAdapter {
                     FontMetrics fontMetrics = graphics.getFontMetrics();
                     int ascent = fontMetrics.getAscent();
                     int stringWidth = fontMetrics.stringWidth(blockContent);
+                    customBlock.setContentWidth(stringWidth);
+                    customBlock.setContent(blockContent);
+                    if (StringUtils.isNotBlank(customBlock.getBeforeBlockName()) && Objects.nonNull(blockMap.get(customBlock.getBeforeBlockName()))) {
+                        CustomBlock block = blockMap.get(customBlock.getBeforeBlockName());
+                        x = block.getX() + block.getContentWidth() + (block.getContentWidth()/block.getContent().length()/2);
+                    }
+
                     switch (layout) {
                         case 1:
                             x = width - stringWidth;
