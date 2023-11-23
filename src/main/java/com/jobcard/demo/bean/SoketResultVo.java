@@ -6,10 +6,10 @@ import java.util.Optional;
 /**
  * 卓越 2022/10/12 19:44:13
  * 【刷卡消息】
- * 	员工ID	userId
- * 	发卡状态	execStatusCls
- * 	批次卡号	cardId
- *
+ * 员工ID	userId
+ * 发卡状态	execStatusCls
+ * 批次卡号	cardId
+ * <p>
  * 卓越 2022/10/12 19:44:55
  * 发卡状态	execStatusCls：  0开始刷卡 1刷卡成功 2 刷卡失败
  */
@@ -37,6 +37,7 @@ public class SoketResultVo {
 
 
     public Integer sessionHashCode;
+
     public SoketResultVo() {
     }
 
@@ -44,7 +45,7 @@ public class SoketResultVo {
         Optional.ofNullable(taskBean).ifPresent(t -> {
             Map<String, String> cardInfo = t.getParam();
             this.userId = cardInfo.get("userId");
-            this.userName =cardInfo.get("name");
+            this.userName = cardInfo.get("name");
             this.cardId = t.getCardId();
             this.sessionHashCode = t.getSessionHashCode();
         });

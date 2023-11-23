@@ -81,12 +81,8 @@ public class SyncDeviceStateTask {
         List<String> userIdCurrent = DeviceManage.taskQueueCurrent.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         if (syncLogShowRateTtatic-- <= 0) {
             log.info(sb.toString());
-            log.info("\r\n\r\n任务状态:{}   设备数量:{}   设备号:{}    socket连接数：{}\r\n 【待处理队列】剩余数:{}  UserIdS:{}\r\n 【处理队列】剩余数:{} UserIdS:{}\r\n",
-                    DeviceManage.isWord(), deviceNos.size(), getDeviceState(deviceNos), WebSocket.webSocketMap.size(), DeviceManage.taskQueueWait.size(), userId,
-                    DeviceManage.taskQueueCurrent.size(), userIdCurrent);
-            log.info("\r\n\r\ndeviceState.size():{} isWord():{} isInit():{} isIsClean()：{}  taskQueueCurrent.size()：{}  taskQueueWait.size():{} WebSocket.webSocketMap.size():{}",
-                    DeviceManage.deviceState.keySet().size(), DeviceManage.isWord(), DeviceManage.isInit(), DeviceManage.isIsClean(), DeviceManage.taskQueueCurrent.size(),
-                    DeviceManage.taskQueueWait.size(),WebSocket.webSocketMap.size());
+            log.info("\r\n\r\n任务状态:{}   设备数量:{}   设备号:{}    socket连接数：{}\r\n 【待处理队列】剩余数:{}  UserIdS:{}\r\n 【处理队列】剩余数:{} UserIdS:{}\r\n", DeviceManage.isWord(), deviceNos.size(), getDeviceState(deviceNos), WebSocket.webSocketMap.size(), DeviceManage.taskQueueWait.size(), userId, DeviceManage.taskQueueCurrent.size(), userIdCurrent);
+            log.info("\r\n\r\ndeviceState.size():{} isWord():{} isInit():{} isIsClean()：{}  taskQueueCurrent.size()：{}  taskQueueWait.size():{} WebSocket.webSocketMap.size():{}", DeviceManage.deviceState.keySet().size(), DeviceManage.isWord(), DeviceManage.isInit(), DeviceManage.isIsClean(), DeviceManage.taskQueueCurrent.size(), DeviceManage.taskQueueWait.size(), WebSocket.webSocketMap.size());
             syncLogShowRateTtatic = syncLogShowRate;
         }
         DeviceManage.setSynStatus(false);

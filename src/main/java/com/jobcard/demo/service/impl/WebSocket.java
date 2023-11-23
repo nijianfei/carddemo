@@ -63,7 +63,7 @@ public class WebSocket {
             CheckAndBuild visitorTypeCls = TemplateSelectUtil.getInstansByCode(params.get(0).get("visitorTypeCls"));
             List<Map<String, String>> maps = visitorTypeCls.checkParam(message);
             ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
-            threadPoolTaskExecutor.submit(() -> executeTask(maps,session.hashCode()));
+            threadPoolTaskExecutor.submit(() -> executeTask(maps, session.hashCode()));
             log.info("END---来自客户端用户：{} 消息:{}", hashCode, message);
         } catch (Exception e) {
             DeviceManage.setWord(false);

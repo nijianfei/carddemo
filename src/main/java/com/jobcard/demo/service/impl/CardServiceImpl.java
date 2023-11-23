@@ -99,9 +99,9 @@ public class CardServiceImpl implements CardService {
         }
     }
 
-    public CoreCheckStateEnum checkUserIdAndCardId(String cardId, String userId,String buildingId) {
+    public CoreCheckStateEnum checkUserIdAndCardId(String cardId, String userId, String buildingId) {
         if (isCheck) {
-            Map<String, String> strMap = Maps.newHashMap("cardId", cardId, "userId", userId,"buildingId",buildingId);
+            Map<String, String> strMap = Maps.newHashMap("cardId", cardId, "userId", userId, "buildingId", buildingId);
             //调用中台查询人卡是否合法
             String paramsStr = null;
             try {

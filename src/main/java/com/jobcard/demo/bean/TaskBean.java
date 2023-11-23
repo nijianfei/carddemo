@@ -6,11 +6,12 @@ import java.util.Map;
 
 public class TaskBean {
     private Integer sessionHashCode;
-    private Map<String,String> param;
+    private Map<String, String> param;
 
     private TaskStateEnum taskState = TaskStateEnum.READY;
 
     private String cardId;
+
     public TaskBean() {
     }
 

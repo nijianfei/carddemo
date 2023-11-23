@@ -42,7 +42,7 @@ public class CardReader {
         long cardNum;
         int[] pSnr = new int[20];
         if (this.rd.dc_card(this.lDevice, (short) 0, pSnr) != 0) {
-            log.error("lDevice:{},dc_card异常",this.lDevice);
+            log.error("lDevice:{},dc_card异常", this.lDevice);
             this.transStatus.notifyMessage("卡片初始化失败");
             this.rd.dc_exit(this.lDevice);
             return transStatus;
@@ -79,7 +79,7 @@ public class CardReader {
         Date startDate = new Date();
         writeTag(imageData);
         Date endDate = new Date();
-        log.info("卡号：{},写卡计时开始：{}，写卡计时结束：{},历时秒：{}",cardId,DateUtil.formatDateTime(startDate), DateUtil.formatDateTime(endDate) , (endDate.getTime() - startDate.getTime()) * 0.001);
+        log.info("卡号：{},写卡计时开始：{}，写卡计时结束：{},历时秒：{}", cardId, DateUtil.formatDateTime(startDate), DateUtil.formatDateTime(endDate), (endDate.getTime() - startDate.getTime()) * 0.001);
         CardReader.dcExit(this.rd);
         return transStatus;
     }

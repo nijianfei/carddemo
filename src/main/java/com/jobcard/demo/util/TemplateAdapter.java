@@ -57,7 +57,7 @@ public class TemplateAdapter {
 //        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         //消除画图锯齿
 //        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        Map<String,CustomBlock> blockMap = blockList.stream().collect(Collectors.toMap(CustomBlock::getName, Function.identity()));
+        Map<String, CustomBlock> blockMap = blockList.stream().collect(Collectors.toMap(CustomBlock::getName, Function.identity()));
 //        Optional.ofNullable(blockMap.get("buildingName")).ifPresent(bb->{
 //            if (StringUtils.isNotBlank(map.get("buildingName")) && map.get("buildingName").length()>4) {
 //                Optional.ofNullable(blockMap.get("floorNames")).ifPresent(fb->{
@@ -93,7 +93,7 @@ public class TemplateAdapter {
                     customBlock.setContent(blockContent);
                     if (StringUtils.isNotBlank(customBlock.getBeforeBlockName()) && Objects.nonNull(blockMap.get(customBlock.getBeforeBlockName()))) {
                         CustomBlock block = blockMap.get(customBlock.getBeforeBlockName());
-                        x = block.getX() + block.getContentWidth() + (block.getContentWidth()/block.getContent().length()/2);
+                        x = block.getX() + block.getContentWidth() + (block.getContentWidth() / block.getContent().length() / 2);
                     }
 
                     switch (layout) {

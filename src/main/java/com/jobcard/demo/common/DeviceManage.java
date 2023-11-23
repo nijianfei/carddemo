@@ -64,8 +64,9 @@ public class DeviceManage {
     }
 
     public static synchronized void setSynStatus(boolean synStatus) {
-            DeviceManage.synStatus = synStatus;
+        DeviceManage.synStatus = synStatus;
     }
+
     public static synchronized boolean getSetSynStatus(boolean synStatus) {
         if (!isSynStatus()) {
             DeviceManage.synStatus = synStatus;
@@ -77,7 +78,7 @@ public class DeviceManage {
     public static synchronized void initDevice(int expectDeviceQty) {
         SetInit(true);
         sleep(1000);
-        DeviceManage.deviceState.keySet().forEach(key->{
+        DeviceManage.deviceState.keySet().forEach(key -> {
             JavaRD800 rd = DeviceManage.deviceState.get(key).getRd();
             rd.dc_exit(rd.getlDevice());
         });
@@ -88,13 +89,13 @@ public class DeviceManage {
             JavaRD800 rd = new JavaRD800();
             Integer lDevice = rd.dc_init(deviceNo, 115200);
             if (lDevice <= 0) {
-                log.error("打开读卡器端口失败! {}" , deviceNo);
+                log.error("打开读卡器端口失败! {}", deviceNo);
 //                System.out.println("打开读卡器端口失败!" + deviceNo);
                 rd.dc_exit(lDevice);
                 continue;
             }
             if (rd.dc_reset(lDevice, 1) != 0) {
-                log.error("dc_reset error! {}" , deviceNo);
+                log.error("dc_reset error! {}", deviceNo);
 //                System.out.print(String.format("dc_reset error! %s\n", deviceNo));
                 rd.dc_exit(lDevice);
                 continue;
@@ -127,7 +128,7 @@ public class DeviceManage {
             }
             deviceState.setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
-            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId,cardInfo.get("buildingId"));
+            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId, cardInfo.get("buildingId"));
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
             //通知开始写卡
             sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
@@ -164,7 +165,7 @@ public class DeviceManage {
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.FAIL.getCode(), coreCheckStateEnum.getName()));
 //                return;
-            } else  {//后台check异常
+            } else {//后台check异常
                 taskBean.setTaskState(TaskStateEnum.FAIL);
                 deviceState.setStateEnum(DeviceStateEnum.FAIL.setDetailMsg(CoreCheckStateEnum.getEnumByCode(coreCheckStateEnum.getCode()).getName()));
                 deviceState.setLastCardNo(cardId);
@@ -235,7 +236,7 @@ public class DeviceManage {
             WebSocket webSocket = WebSocket.webSocketMap.get(currentHashCode);
             log.info("【发送Socket通知信息】：{}", JSONUtil.toJsonStr(Arrays.asList(srVo)));
             webSocket.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
-        }else{
+        } else {
             log.info("【发送Socket通知信息——源连接 currentHashCode：{}，消息sessionHashCode：{}】不一致，跳过通知！！！ 内容：{}",
                     currentHashCode, srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
         }
