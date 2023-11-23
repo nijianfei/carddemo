@@ -25,6 +25,12 @@ public class DefaultTemplateBean {
     //访客类型	
     private String visitorTypeCls;
 
+    //楼宇名称
+    private String buildingName;
+
+    //楼层名称
+    private String floorNames;
+
     public String getVisitDate() {
         return StringUtils.isNotBlank(visitDate) ? visitDate : "";
     }
@@ -139,6 +145,22 @@ public class DefaultTemplateBean {
 
     public void setVisitorTypeCls(String visitorTypeCls) {
         this.visitorTypeCls = visitorTypeCls;
+    }
+
+    public String getBuildingName() {
+        return buildingName;
+    }
+
+    public void setBuildingName(String buildingName) {
+        this.buildingName = buildingName;
+    }
+
+    public String getFloorNames() {
+        return StringUtils.isNotBlank(floorNames) && floorNames.length() > 20 ? floorNames.substring(0,20):floorNames;
+    }
+
+    public void setFloorNames(String floorNames) {
+        this.floorNames = floorNames;
     }
 
     public void check() {

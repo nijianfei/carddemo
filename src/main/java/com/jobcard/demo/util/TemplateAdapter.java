@@ -18,6 +18,9 @@ import java.lang.reflect.Type;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TemplateAdapter {
     //背景图 BufferedImage 对象
@@ -56,6 +59,15 @@ public class TemplateAdapter {
 //        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         //消除画图锯齿
 //        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        Map<String,CustomBlock> blockMap = blockList.stream().collect(Collectors.toMap(CustomBlock::getName, Function.identity()));
+        Optional.ofNullable(blockMap.get("buildingName")).ifPresent(bb->{
+            if (StringUtils.isNotBlank(map.get("buildingName")) && map.get("buildingName").length()>4) {
+                Optional.ofNullable(blockMap.get("floorNames")).ifPresent(fb->{
+                    fb.setX(fb.getX() + 13);
+                });
+            }
+        });
+
         for (CustomBlock customBlock : this.blockList) {
             try {
                 int type2 = customBlock.getType();

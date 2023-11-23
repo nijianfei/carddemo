@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import sun.misc.BASE64Decoder;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -31,18 +32,18 @@ public class DemoApplication {
         ac = SpringApplication.run(DemoApplication.class, args);
         CheckAndBuildImplMap = ac.getBeansOfType(CheckAndBuild.class);
 
-        try {
-            CardServiceImpl bean = ac.getBean(CardServiceImpl.class);
-            String styleData = bean.getStyleData("");
-            TemplateAdapter adapter = TemplateAdapter.setTemplate(styleData);
-            addBlock(adapter);
-            String content = getContent();
-            List<Map> maps = JSONUtil.toList(content, Map.class);
-            BufferedImage image = adapter.getImage(maps.get(0));
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            CardServiceImpl bean = ac.getBean(CardServiceImpl.class);
+//            String styleData = bean.getStyleData("");
+//            TemplateAdapter adapter = TemplateAdapter.setTemplate(styleData);
+//            addBlock(adapter);
+//            String content = getContent();
+//            List<Map> maps = JSONUtil.toList(content, Map.class);
+//            BufferedImage image = adapter.getImage(maps.get(0));
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     private static String getContent() {
@@ -56,7 +57,7 @@ public class DemoApplication {
                 "  'userId': 'CSC123456',\n" +
                 "  'name': '刘军熹',\n" +
                 "  'buildName': '中信大厦',\n" +
-                "  'floorName': '59F 76F 77F 78F 79F',\n" +
+                "  'floorName': '59F 76F-78F 79F-81F',\n" +
                 "  'company': '北京奥普杰特科技发...',\n" +
                 "  'depart': '信息技术部',\n" +
                 "  'visitorTypeCls': '02'\n" +
