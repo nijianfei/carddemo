@@ -35,7 +35,7 @@ function check(str)
             --print('len:' .. utf8len(v))
             if (utf8len(v) > 4) then
                 --print(k .. '_sub:' .. utf8sub(v, 1, 3))
-                table[k] = utf8sub(v, 1, 3) .. '...'
+                table[k] = utf8sub(v, 1, 3) .. '..'
             else
                 table[k] = v
             end
@@ -57,14 +57,14 @@ function check(str)
         --来访事由
         if (k == 'visitReason') then
             --print('len:' .. utf8len(v))
-            if (utf8len(v) > 8) then
-                local visitReasonSub = utf8sub(v, 1, 8)
+            if (utf8len(v) > 9) then
+                local visitReasonSub = utf8sub(v, 1, 9)
                 --print(k .. '_sub:' .. visitReasonSub)
                 table[k] = visitReasonSub
-                local visitReasonSub1 = utf8sub(v, 1 + 8, utf8len(v) - 8)
-                if (utf8len(visitReasonSub1) > 8) then
+                local visitReasonSub1 = utf8sub(v, 1 + 9, utf8len(v) - 9)
+                if (utf8len(visitReasonSub1) > 9) then
                     --print('visitReason1' .. '_sub:' .. utf8sub(visitReasonSub1, 1, 7) .. '...')
-                    table['visitReason1'] = utf8sub(visitReasonSub1, 1, 7) .. '...'
+                    table['visitReason1'] = utf8sub(visitReasonSub1, 1, 8) .. '...'
                 else
                     table['visitReason1'] = visitReasonSub1
                 end
@@ -76,6 +76,8 @@ function check(str)
         table[k] = v
         ::continue::
     end
+    --被访者工号-姓名
+    table['interviewees']=table['intervieweesId'] .. '-' .. table['intervieweesName']
     if (not table['userId'] or string.len(table['userId']) == 0) then
         table['errorMsg'] = 'userId不能为空'
     end
