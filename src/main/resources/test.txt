@@ -1,0 +1,12 @@
+{'company',
+'intervieweesId',
+'visitDate',
+'interviewees',
+'intervieweesName',
+'floorNames',
+'depart',
+'userId',
+'name',
+'buildingName',
+'visitorTypeCls',
+'visitReason'}

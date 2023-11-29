@@ -1,22 +1,21 @@
 package com.jobcard.demo.service.impl;
 
-import cn.hutool.json.JSONUtil;
-import com.jobcard.demo.bean.DefaultTemplateBean;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.JSONWriter;
 import com.jobcard.demo.service.CheckAndBuild;
 import com.jobcard.demo.util.LuaJUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ResourceUtils;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.net.URL;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -24,35 +23,55 @@ public class DefaultTemplate implements CheckAndBuild {
     @Override
     public List<Map<String, String>> checkParam(String message) {
         try {
-            File file = ResourceUtils.getFile("classpath:\\lua\\test.lua");
-            Globals globals = LuaJUtils.loadScriptFromFile(file.getAbsolutePath());
-            LuaJUtils.callFunction(globals,"hello",null);
-            LuaJUtils.callFunction(globals,"test", LuaValue.valueOf("测试字符串传参"));
-            LuaTable luaTable = new LuaTable();
-            luaTable.set(1,"测试数组传参");
-            LuaJUtils.callFunction(globals,"test2",luaTable);
-            List<DefaultTemplateBean> defaultTemplateBeans = JSONUtil.toList(message, DefaultTemplateBean.class);
-            if (CollectionUtils.isEmpty(defaultTemplateBeans)) {
-                throw new RuntimeException("参数不能为空");
+            File luaFile = getLuaFile();
+            log.debug("lua path:{}",luaFile.getAbsolutePath());
+            Globals globals = LuaJUtils.loadScriptFromFile(luaFile.getAbsolutePath());
+            List<Map> param = JSONArray.parseArray(message,Map.class);
+            List<Map<String,String>> checkedParam = new ArrayList<>(param.size());
+            for (Map map : param) {
+                LuaTable luaTable = new LuaTable();
+                for (Object key : map.keySet()) {
+                    Object value = map.get(key);
+                    value = Objects.nonNull(value) ? value : "";
+                    luaTable.set(String.valueOf(key),value.toString());
+                }
+                LuaValue luaValue = LuaJUtils.callFunction(globals,"check",luaTable);
+                CoerceLuaToJava.coerce(luaValue, Map.class);
+                Map<String,String> pMap = new HashMap<>();
+                for (LuaValue key : luaValue.checktable().keys()) {
+                    LuaValue value = luaValue.checktable().get(key);
+                    System.out.println("key:" + key.toString() + "  value:" +value.toString());
+                    pMap.put(String.valueOf(key),String.valueOf(value));
+                }
+                checkedParam.add(pMap);
             }
-            for (DefaultTemplateBean defaultTemplateBean : defaultTemplateBeans) {
-                defaultTemplateBean.check();
+
+            log.info("{}原参数：{} {}CHECK后参数：{}",System.lineSeparator(), JSONObject.toJSONString(param),System.lineSeparator(),JSONObject.toJSONString(checkedParam));
+            for (Map<String, String> pMap : checkedParam) {
+                String errorMsg = pMap.get("errorMsg");
+                if (StringUtils.isNotBlank(errorMsg)) {
+                    log.error("写卡信息缺少必填信息userId：{}", JSONObject.toJSONString(pMap, JSONWriter.Feature.PrettyFormat));
+                    throw new RuntimeException(errorMsg);
+                }
             }
-            String pJsonStr = JSONUtil.toJsonStr(defaultTemplateBeans);
-            List<Map> maps = JSONUtil.toList(pJsonStr, Map.class);
-            List<Map<String, String>> params = maps.stream().map(o -> {
-                Map<String, String> m = new HashMap<>();
-                o.keySet().forEach(key -> {
-                    String ks = key.toString();
-                    m.put(ks, o.get(ks).toString());
-                });
-                return m;
-            }).collect(Collectors.toList());
-            return params;
+
+            return checkedParam;
         } catch (Exception e) {
             log.error("参数解析异常_入参：{}，Exception->", message, e);
             throw new RuntimeException(e);
         }
+    }
+
+    private File getLuaFile() {
+        URL resource = Class.class.getClass().getResource("/");
+        File path = Objects.nonNull(resource)?new File(resource.getPath()):new File(System.getProperty("user.dir"));
+        log.debug("当前环境lua path : {}",path.getAbsolutePath());
+        File file = new File(path,"lua\\params_check.lua");
+        if (!file.exists()) {
+            log.error("lua file not in : {}",file.getAbsoluteFile());
+            throw new RuntimeException("not exist :" + file.getAbsoluteFile());
+        }
+        return file;
     }
 
     @Override
