@@ -39,28 +39,14 @@ public class CardReader {
 
     public TransStatus start(BufferedImage image) {
         rd.initDevice();
-        long cardNum;
-        int[] pSnr = new int[20];
-        if (this.rd.dc_card(this.lDevice, (short) 0, pSnr) != 0) {
+        String cardId = rd.readCard();
+        if (Integer.parseInt(cardId) <= 0) {
             log.error("lDevice:{},dc_card异常", this.lDevice);
             this.transStatus.notifyMessage("卡片初始化失败");
-            this.rd.dc_exit(this.lDevice);
             return transStatus;
         }
-//        System.out.print("dc_card ok!\n");
-//        System.out.println("cardnum:" + pSnr[0]);
-        if (pSnr[0] < 0) {
-            cardNum = -(-4294967296L - ((long) pSnr[0]));
-        } else {
-            cardNum = pSnr[0];
-        }
-        String cardId = String.valueOf(cardNum);
         this.cardNum = cardId;
-        StringBuilder builder = new StringBuilder(cardId);
-        for (int i = 0; i < 10 - cardId.length(); i++) {
-            builder.insert(0, "0");
-        }
-        this.transStatus.getCardId(builder.toString());
+        this.transStatus.getCardId(cardId);
         System.out.println("pro_reset:" + ((int) this.rd.dc_pro_reset(this.lDevice, new short[1], new char[20])));
         int width = image.getWidth();
         int height = image.getHeight();

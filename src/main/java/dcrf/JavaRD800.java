@@ -21,58 +21,58 @@ public class JavaRD800 {
     private int lDevice = 0;
     private int deviceNo = 0;
 
-    public native short dc_anticoll(int i, short s, int[] iArr);
+    private native short dc_anticoll(int i, short s, int[] iArr);
 
-    public native short dc_authentication(int i, short s, short s2);
+    private native short dc_authentication(int i, short s, short s2);
 
-    public native short dc_beep(int i, short s);
+    private native short dc_beep(int i, short s);
 
     /**
      * 卡片初始化
      */
-    public native short dc_card(int i, short s, int[] iArr);
+    private native short dc_card(int i, short s, int[] iArr);
 
-    public native short dc_config_card(int i, char c);
+    private native short dc_config_card(int i, char c);
 
-    public native short dc_cpuapdu(int i, short s, char[] cArr, short[] sArr, char[] cArr2);
+    private native short dc_cpuapdu(int i, short s, char[] cArr, short[] sArr, char[] cArr2);
 
-    public native short dc_cpuapdusource(int i, short s, char[] cArr, short[] sArr, char[] cArr2);
+    private native short dc_cpuapdusource(int i, short s, char[] cArr, short[] sArr, char[] cArr2);
 
-    public native short dc_cpudown(int i);
+    private native short dc_cpudown(int i);
 
-    public native short dc_cpureset(int i, short[] sArr, char[] cArr);
+    private native short dc_cpureset(int i, short[] sArr, char[] cArr);
 
-    public native short dc_ctl_mode(int i, short s);
+    private native short dc_ctl_mode(int i, short s);
 
-    public native short dc_decrement(int i, short s, int i2);
+    private native short dc_decrement(int i, short s, int i2);
 
-    public native short dc_disp_mode(int i, short s);
+    private native short dc_disp_mode(int i, short s);
 
-    public native short dc_disp_str(int i, char[] cArr);
+    private native short dc_disp_str(int i, char[] cArr);
 
     /**
      * 退出设备
      */
-    public native short dc_exit(int i);
+    private native short dc_exit(int i);
 
-    public native short dc_gettime(int i, char[] cArr);
+    private native short dc_gettime(int i, char[] cArr);
 
-    public native short dc_gettimehex(int i, char[] cArr);
+    private native short dc_gettimehex(int i, char[] cArr);
 
-    public native short dc_halt(int i);
+    private native short dc_halt(int i);
 
-    public native short dc_high_disp(int i, short s, short s2, char[] cArr);
+    private native short dc_high_disp(int i, short s, short s2, char[] cArr);
 
-    public native short dc_increment(int i, short s, int i2);
+    private native short dc_increment(int i, short s, int i2);
 
     /**
      * 设备初始化
      */
     public native int dc_init(int i, int i2);
 
-    public native short dc_initval(int i, short s, int i2);
+    private native short dc_initval(int i, short s, int i2);
 
-    public native short dc_load_key(int i, short s, short s2, char[] cArr);
+    private native short dc_load_key(int i, short s, short s2, char[] cArr);
 
     /**
      * 写卡
@@ -81,38 +81,38 @@ public class JavaRD800 {
 
     public native short dc_pro_reset(int i, short[] sArr, char[] cArr);
 
-    public native String dc_read(int i, short s, String str);
+    private native String dc_read(int i, short s, String str);
 
-    public native short dc_read(int i, short s, char[] cArr);
+    private native short dc_read(int i, short s, char[] cArr);
 
-    public native short dc_readval(int i, short s, int[] iArr);
+    private native short dc_readval(int i, short s, int[] iArr);
 
-    public native short dc_request(int i, short s, int[] iArr);
+    private native short dc_request(int i, short s, int[] iArr);
 
     /**
      * 重置设备
      */
     public native short dc_reset(int i, int i2);
 
-    public native short dc_restore(int i, short s);
+    private native short dc_restore(int i, short s);
 
-    public native short dc_select(int i, int i2, short[] sArr);
+    private native short dc_select(int i, int i2, short[] sArr);
 
-    public native short dc_setbright(int i, short s);
+    private native short dc_setbright(int i, short s);
 
-    public native short dc_settime(int i, char[] cArr);
+    private native short dc_settime(int i, char[] cArr);
 
-    public native short dc_settimehex(int i, char[] cArr);
+    private native short dc_settimehex(int i, char[] cArr);
 
-    public native short dc_srd_eeprom(int i, int i2, int i3, char[] cArr);
+    private native short dc_srd_eeprom(int i, int i2, int i3, char[] cArr);
 
-    public native short dc_swr_eeprom(int i, int i2, int i3, char[] cArr);
+    private native short dc_swr_eeprom(int i, int i2, int i3, char[] cArr);
 
-    public native short dc_transfer(int i, short s);
+    private native short dc_transfer(int i, short s);
 
-    public native short dc_write(int i, short s, String str);
+    private native short dc_write(int i, short s, String str);
 
-    public native short dc_write(int i, short s, char[] cArr);
+    private native short dc_write(int i, short s, char[] cArr);
 
     static {
         System.loadLibrary("javaRD800");
@@ -143,10 +143,14 @@ public class JavaRD800 {
             log.error("设备 initDevice，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, "-1");
             return "-1";
         }
+        return readCard();
+    }
+
+    public String readCard() {
+        this.dc_reset(lDevice, 1);
         long cardNum;
         int[] pSnr = new int[20];
         if (this.dc_card(this.getlDevice(), (short) 0, pSnr) != 0) {
-//            log.error("lDevice:{}, readCardId_dc_card error （无卡片）!", lDevice);
             this.dc_exit(this.getlDevice());
         }
         if (pSnr[0] < 0) {
@@ -155,17 +159,15 @@ public class JavaRD800 {
             cardNum = pSnr[0];
         }
         String cardId = String.valueOf(cardNum);
-        log.info("设备dc_card，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, cardId);
-//        this.dcExit();
+        log.info("readCard，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, cardId);
         return cardId;
     }
-
     public void dcExit() {
         if (this.dc_exit(this.getlDevice()) != 0) {
             System.out.print("dc_exit error!\n");
             this.dc_exit(this.getlDevice());
         }
-        this.initDevice();
+//        this.initDevice();
     }
 
     public int initDevice() {

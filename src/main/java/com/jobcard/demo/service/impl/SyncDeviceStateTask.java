@@ -62,27 +62,35 @@ public class SyncDeviceStateTask {
                     cardId = deviceState.getRd().readCardId();
                     if (Objects.equals(cardId, "-1")) {//卡号为-1，读卡异常
                         deviceState.setStateEnum(DeviceStateEnum.EXCEPTION);
+                        log.info("\r\n-->设备号:{},状态:{}--》EXCEPTION,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     if (Objects.equals(cardId, "0")) {//卡号为0，代表设备上无卡片，设置设备为空闲状态
                         deviceState.setStateEnum(DeviceStateEnum.FREE);
                         DeviceManage.readyQueue.remove(deviceState.getRd());
                         deviceState.setLastCardNo(null);
+                        log.info("\r\n-->设备号:{},状态:{}--》FREE,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     //卡号不为0，代表设备上有卡片 并且 卡号和设备上次处理的卡号不相同，设置设备为就绪状态
                     if (!Objects.equals(cardId, "0") && !Objects.equals(cardId, lastCardNo)) {
                         DeviceManage.pushReadyQueue(deviceState.getRd());
                         deviceState.setStateEnum(DeviceStateEnum.READY);
+                        log.info("\r\n-->设备号:{},状态:{}--》READY,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     break;
+                case BUSY:
+                    log.info("\r\n-->设备号:{},状态:{},lastCardNo:{}",deviceNo,sourceState,lastCardNo);
+                    break;
             }
-            sb.append(String.format("\r\n设备号:%s,状态:%s(L %s) -> %s(%s)", deviceNo, sourceState, deviceState.getLastCardNo(), deviceState.getStateEnum().getValue(), cardId));
+            sb.append(String.format("\r\n设备号:%s,状态:%s(L %s) -> %s(%s)", deviceNo, sourceState, lastCardNo, deviceState.getStateEnum().getValue(), cardId));
         }
         List<String> userId = DeviceManage.taskQueueWait.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         List<String> userIdCurrent = DeviceManage.taskQueueCurrent.stream().map(t -> t.getParam().get("userId")).collect(Collectors.toList());
         if (syncLogShowRateTtatic-- <= 0) {
             log.info(sb.toString());
-            log.info("\r\n\r\n任务状态:{}   设备数量:{}   设备号:{}    socket连接数：{}\r\n 【待处理队列】剩余数:{}  UserIdS:{}\r\n 【处理队列】剩余数:{} UserIdS:{}\r\n", DeviceManage.isWord(), deviceNos.size(), getDeviceState(deviceNos), WebSocket.webSocketMap.size(), DeviceManage.taskQueueWait.size(), userId, DeviceManage.taskQueueCurrent.size(), userIdCurrent);
-            log.info("\r\n\r\ndeviceState.size():{} isWord():{} isInit():{} isIsClean()：{}  taskQueueCurrent.size()：{}  taskQueueWait.size():{} WebSocket.webSocketMap.size():{}", DeviceManage.deviceState.keySet().size(), DeviceManage.isWord(), DeviceManage.isInit(), DeviceManage.isIsClean(), DeviceManage.taskQueueCurrent.size(), DeviceManage.taskQueueWait.size(), WebSocket.webSocketMap.size());
+            log.info("\r\n\r\n任务状态:{}   设备数量:{}   设备号:{}    socket连接数：{}\r\n 【待处理队列】剩余数:{}  UserIdS:{}\r\n 【处理队列】剩余数:{} UserIdS:{}\r\n",
+                    DeviceManage.isWord(), deviceNos.size(), getDeviceState(deviceNos), WebSocket.webSocketMap.size(), DeviceManage.taskQueueWait.size(), userId, DeviceManage.taskQueueCurrent.size(), userIdCurrent);
+            log.info("\r\n\r\ndeviceState.size():{} isWord():{} isInit():{} isIsClean()：{}  taskQueueCurrent.size()：{}  taskQueueWait.size():{} WebSocket.webSocketMap.size():{}",
+                    DeviceManage.deviceState.keySet().size(), DeviceManage.isWord(), DeviceManage.isInit(), DeviceManage.isIsClean(), DeviceManage.taskQueueCurrent.size(), DeviceManage.taskQueueWait.size(), WebSocket.webSocketMap.size());
             syncLogShowRateTtatic = syncLogShowRate;
         }
         DeviceManage.setSynStatus(false);
