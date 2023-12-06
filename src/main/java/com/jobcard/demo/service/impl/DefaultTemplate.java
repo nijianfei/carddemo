@@ -58,7 +58,7 @@ public class DefaultTemplate implements CheckAndBuild {
             return checkedParam;
         } catch (Exception e) {
             log.error("参数解析异常_入参：{}，Exception->", message, e);
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 

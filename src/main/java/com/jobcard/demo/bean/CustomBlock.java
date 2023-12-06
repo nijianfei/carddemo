@@ -4,7 +4,7 @@ public class CustomBlock {
     //颜色
     private int color;
     //内容
-    private String content;
+    private String content="";
     //字体
     private String font;
     //文字大小
@@ -26,7 +26,7 @@ public class CustomBlock {
     //元素坐标Y
     private int y;
 
-    private int contentWidth;
+    private int contentWidth = 0;
 
     private String beforeBlockName;
 

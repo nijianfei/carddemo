@@ -71,6 +71,9 @@ public class TemplateAdapter {
                 int type2 = customBlock.getType();//快类型  0：文字
                 String blockName = customBlock.getName();
                 String blockContent = map.get(blockName);
+                if (StringUtils.isBlank(blockContent)) {
+                    continue;
+                }
                 int x = customBlock.getX();//块x坐标
                 int y = customBlock.getY();//块y坐标
                 int layout = customBlock.getLayout();
@@ -93,7 +96,9 @@ public class TemplateAdapter {
                     customBlock.setContent(blockContent);
                     if (StringUtils.isNotBlank(customBlock.getBeforeBlockName()) && Objects.nonNull(blockMap.get(customBlock.getBeforeBlockName()))) {
                         CustomBlock block = blockMap.get(customBlock.getBeforeBlockName());
-                        x = block.getX() + block.getContentWidth() + (block.getContentWidth() / block.getContent().length() / 2);
+                        int cLength = block.getContent().length();
+                        cLength = cLength == 0 ? cLength + 1 : cLength;
+                        x = block.getX() + block.getContentWidth() + (block.getContentWidth() / cLength / 2);
                     }
 
                     switch (layout) {

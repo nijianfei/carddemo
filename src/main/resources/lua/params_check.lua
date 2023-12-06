@@ -76,6 +76,14 @@ function check(str)
         table[k] = v
         ::continue::
     end
+    --被访者工号
+    if(table['intervieweesId'] == nil) then
+        table['intervieweesId']=''
+    end
+    --被访者姓名
+    if(table['intervieweesName'] == nil) then
+        table['intervieweesName']=''
+    end
     --被访者工号-姓名
     table['interviewees']=table['intervieweesId'] .. '-' .. table['intervieweesName']
     if (not table['userId'] or string.len(table['userId']) == 0) then
