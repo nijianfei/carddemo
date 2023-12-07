@@ -25,7 +25,7 @@ public class SyncDeviceStateTask {
     /**
      * 按照标准时间来算，每隔 2s 执行一次
      */
-    @Scheduled(cron = "0/2 * * * * ?")
+    @Scheduled(cron = "0/1 * * * * ?")
     public void update() {
         if (!DeviceManage.getSetSynStatus(true)) {
             return;

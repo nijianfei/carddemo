@@ -61,7 +61,7 @@ public class CardReader {
             builder.insert(0, "0");
         }
         this.transStatus.getCardId(builder.toString());
-        System.out.println("pro_reset:" + ((int) this.rd.dc_pro_reset(this.lDevice, new short[1], new char[20])));
+        System.out.println(this.lDevice + "：pro_reset:" + ((int) this.rd.dc_pro_reset(this.lDevice, new short[1], new char[20])));
         int width = image.getWidth();
         int height = image.getHeight();
         int size = width * height;
@@ -154,8 +154,8 @@ public class CardReader {
         }
         this.screenIndex = (char) (this.screenIndex - 1);
         this.transStatus.notifyMessage("准备刷屏，请勿挪动卡片");
-        unlockCard();
         try {
+            unlockCard();
             if (refreshScreenAfterWriteData()) {
                 getRefreshResult();
             }
