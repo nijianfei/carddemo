@@ -142,6 +142,7 @@ public class CardReader {
         this.transStatus.notifyMessage("准备刷屏，请勿挪动卡片");
         unlockCard();
         try {
+            unlockCard();
             if (refreshScreenAfterWriteData()) {
                 getRefreshResult();
             }

@@ -10,3 +10,47 @@
 'buildingName',
 'visitorTypeCls',
 'visitReason'}
+
+
+
+[
+  {
+    "buildingName":"泰康大厦",
+    "floorNames":"9F",
+    "company":"中企华商南京股菩投资基金中心（有限合伙）",
+    "depart":"",
+    "name":"王裕仁1",
+    "userId":"GST02755",
+    "visitorTypeCls":"06",
+    "visitDate":"12/06 13:00",
+    "visitReason":"参会|王静涛邀请一行人来访",
+    "intervieweesId":"CSC08503",
+    "intervieweesName":"王静涛"
+  },
+  {
+    "buildingName":"泰康大厦",
+    "floorNames":"9F",
+    "company":"中企华商南京股菩投资基金中心（有限合伙）",
+    "depart":"",
+    "name":"林千惠2",
+    "userId":"GST02759",
+    "visitorTypeCls":"06",
+    "visitDate":"12/06 13:00",
+    "visitReason":"参会|王静涛邀请一行人来访",
+    "intervieweesId":"CSC08503",
+    "intervieweesName":"王静涛"
+  },
+  {
+    "buildingName":"泰康大厦",
+    "floorNames":"9F",
+    "company":"中企华商南京股菩投资基金中心（有限合伙）",
+    "depart":"",
+    "name":"林千惠3",
+    "userId":"GST02759",
+    "visitorTypeCls":"06",
+    "visitDate":"12/06 13:00",
+    "visitReason":"参会|王静涛邀请一行人来访",
+    "intervieweesId":"CSC08503",
+    "intervieweesName":"王静涛"
+  }
+]

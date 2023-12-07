@@ -151,6 +151,9 @@ public class JavaRD800 {
         long cardNum;
         int[] pSnr = new int[20];
         if (this.dc_card(this.getlDevice(), (short) 0, pSnr) != 0) {
+        int status = this.dc_card(this.getlDevice(), (short) 0, pSnr);
+        if (status != 0 && status != 1) {
+//            log.error("lDevice:{}, readCardId_dc_card error （无卡片）!", lDevice);
             this.dc_exit(this.getlDevice());
         }
         if (pSnr[0] < 0) {
