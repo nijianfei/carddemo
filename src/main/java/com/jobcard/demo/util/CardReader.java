@@ -38,9 +38,8 @@ public class CardReader {
     }
 
     public TransStatus start(BufferedImage image) {
-        rd.initDevice();
         String cardId = rd.readCard();
-        if (Integer.parseInt(cardId) <= 0) {
+        if (Long.parseLong(cardId) <= 0) {
             log.error("lDevice:{},dc_card异常", this.lDevice);
             this.transStatus.notifyMessage("卡片初始化失败");
             return transStatus;
@@ -66,7 +65,7 @@ public class CardReader {
         writeTag(imageData);
         Date endDate = new Date();
         log.info("卡号：{},写卡计时开始：{}，写卡计时结束：{},历时秒：{}", cardId, DateUtil.formatDateTime(startDate), DateUtil.formatDateTime(endDate), (endDate.getTime() - startDate.getTime()) * 0.001);
-        CardReader.dcExit(this.rd);
+//        CardReader.dcExit(this.rd);
         return transStatus;
     }
 

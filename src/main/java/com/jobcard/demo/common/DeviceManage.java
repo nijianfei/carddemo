@@ -125,6 +125,7 @@ public class DeviceManage {
                 //分辨率：240x416
                 BufferedImage image = adapter.getImage(cardInfo);
                 //设备写卡
+                DeviceManage.sleep(500);
                 CardReader.TransStatus start = cardReader.start(image);
                 if (start.isSuccess()) {
                     log.info("记录本次写卡任务已成功的卡号:{},工号:{}", cardReader.getCardNum(), cardInfo.get("userId"));

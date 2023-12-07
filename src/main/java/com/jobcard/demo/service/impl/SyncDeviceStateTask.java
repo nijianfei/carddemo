@@ -56,9 +56,10 @@ public class SyncDeviceStateTask {
             switch (deviceState.getStateEnum()) {
                 case SUCC:
                 case FAIL:
+                case EXCEPTION:
+                    DeviceManage.sleep(500);
                 case FREE:
                 case READY:
-                case EXCEPTION:
                     cardId = deviceState.getRd().readCardId();
                     if (Objects.equals(cardId, "-1")) {//卡号为-1，读卡异常
                         deviceState.setStateEnum(DeviceStateEnum.EXCEPTION);
