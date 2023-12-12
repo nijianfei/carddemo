@@ -34,9 +34,10 @@ public class SyncDeviceStateTask {
             initDevice();
             DeviceManage.sleep(500);
         }
-        if (!DeviceManage.isWord()) {
-            initDevice();
-        }
+//        if (!DeviceManage.isWord()) {
+//            initDevice();
+//        }
+
         Set<Integer> deviceNos = DeviceManage.deviceState.keySet();
         StringBuilder sb = new StringBuilder();
         for (Integer deviceNo : deviceNos) {
@@ -57,25 +58,24 @@ public class SyncDeviceStateTask {
                 case SUCC:
                 case FAIL:
                 case EXCEPTION:
-                    DeviceManage.sleep(500);
                 case FREE:
                 case READY:
                     cardId = deviceState.getRd().readCardId();
-                    if (Objects.equals(cardId, "-1")) {//卡号为-1，读卡异常
+                     if (Objects.equals(cardId, "-1")) {//卡号为-1，读卡异常
                         deviceState.setStateEnum(DeviceStateEnum.EXCEPTION);
-                        log.info("\r\n-->设备号:{},状态:{}--》EXCEPTION,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
+                        log.info("\r\n--->设备号:{},状态:{}--》EXCEPTION,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     if (Objects.equals(cardId, "0")) {//卡号为0，代表设备上无卡片，设置设备为空闲状态
                         deviceState.setStateEnum(DeviceStateEnum.FREE);
                         DeviceManage.readyQueue.remove(deviceState.getRd());
                         deviceState.setLastCardNo(null);
-                        log.info("\r\n-->设备号:{},状态:{}--》FREE,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
+                        log.info("\r\n--->设备号:{},状态:{}--》FREE,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     //卡号不为0，代表设备上有卡片 并且 卡号和设备上次处理的卡号不相同，设置设备为就绪状态
                     if (!Objects.equals(cardId, "0") && !Objects.equals(cardId, lastCardNo)) {
                         DeviceManage.pushReadyQueue(deviceState.getRd());
                         deviceState.setStateEnum(DeviceStateEnum.READY);
-                        log.info("\r\n-->设备号:{},状态:{}--》READY,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
+                        log.info("\r\n--->设备号:{},状态:{}--》READY,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     break;
                 case BUSY:

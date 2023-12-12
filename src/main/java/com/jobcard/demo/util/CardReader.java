@@ -1,13 +1,21 @@
 package com.jobcard.demo.util;
 
 import cn.hutool.core.date.DateUtil;
+import com.jobcard.demo.common.DeviceManage;
 import dcrf.JavaRD800;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 public class CardReader {
@@ -38,7 +46,7 @@ public class CardReader {
     }
 
     public TransStatus start(BufferedImage image) {
-        String cardId = rd.readCard();
+        String cardId = this.rd.readCardId();
         if (Long.parseLong(cardId) <= 0) {
             log.error("lDevice:{},dc_card异常", this.lDevice);
             this.transStatus.notifyMessage("卡片初始化失败");
@@ -46,7 +54,10 @@ public class CardReader {
         }
         this.cardNum = cardId;
         this.transStatus.getCardId(cardId);
-        System.out.println("pro_reset:" + ((int) this.rd.dc_pro_reset(this.lDevice, new short[1], new char[20])));
+        short pReset = this.rd.dc_pro_reset(this.lDevice, new short[1], new char[20]);
+        if (pReset < 0) {
+            log.error("lDevice:{},pro_reset:", this.lDevice, pReset);
+        }
         int width = image.getWidth();
         int height = image.getHeight();
         int size = width * height;
@@ -65,12 +76,7 @@ public class CardReader {
         writeTag(imageData);
         Date endDate = new Date();
         log.info("卡号：{},写卡计时开始：{}，写卡计时结束：{},历时秒：{}", cardId, DateUtil.formatDateTime(startDate), DateUtil.formatDateTime(endDate), (endDate.getTime() - startDate.getTime()) * 0.001);
-//        CardReader.dcExit(this.rd);
         return transStatus;
-    }
-
-    private static synchronized void dcExit(JavaRD800 rd) {
-        rd.dcExit();
     }
 
     private char[] hexToChar(String hex) throws IllegalArgumentException {
@@ -139,11 +145,10 @@ public class CardReader {
         }
         this.screenIndex = (char) (this.screenIndex - 1);
         this.transStatus.notifyMessage("准备刷屏，请勿挪动卡片");
-        unlockCard();
         try {
             unlockCard();
-            if (refreshScreenAfterWriteData()) {
-                getRefreshResult();
+            if (!refreshScreenAfterWriteData()) {
+                getRefreshResult(5);
             }
         } finally {
             lockCard();
@@ -175,12 +180,12 @@ public class CardReader {
     private boolean refreshScreenAfterWriteData() {
         char[] refreshcmd = {240, 212, 5, 128, 0};
         char[] datasw = new char[3];
-        System.out.println("发送刷图命令");
+        System.out.println("开始发送刷图命令");
         this.rd.dc_pro_command(this.lDevice, (short) refreshcmd.length, refreshcmd, new short[1], datasw, (short) 100);
-//        System.out.println((int) datasw[0]);
-//        System.out.println((int) datasw[1]);
+        System.out.println("发送刷图命令返回：" + (int) datasw[0]);
         if (datasw[0] == 144) {
-            getRefreshResult();
+            DeviceManage.sleep(10000);
+            getRefreshResult(10);
             return true;
         }
         if (datasw[0] == 'i' && datasw[1] == 'i') {
@@ -195,7 +200,7 @@ public class CardReader {
         return false;
     }
 
-    private void getRefreshResult() {
+    private void getRefreshResult(int tryCount) {
         char[] refreshcmd = {240, 212, 5, (char) (this.screenIndex | 65408), 0};
         try {
             char[] datasw = new char[10];
@@ -204,13 +209,17 @@ public class CardReader {
             refreshcmd[3] = 0;
             refreshcmd[4] = 1;
             short[] rlen = new short[1];
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < tryCount; i++) {
                 this.rd.dc_pro_command(this.lDevice, (short) refreshcmd.length, refreshcmd, rlen, datasw, (short) 100);
                 if (datasw[0] == 0 && datasw[1] == 144) {
-                    Thread.sleep(1000);
+                    this.rd.dc_halt(this.lDevice);
+                    Thread.sleep(500);
                     this.transStatus.notifyMessage("刷屏成功");
                     System.out.println("刷屏成功");
                     this.transStatus.finish(true);
+                    if (false) {
+                        this.rd.dc_beep(this.lDevice, (short) 100);
+                    }
                     return;
                 }
                 if (datasw[0] == 1 && datasw[1] == 144) {

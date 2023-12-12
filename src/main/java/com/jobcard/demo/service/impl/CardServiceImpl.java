@@ -49,7 +49,6 @@ public class CardServiceImpl implements CardService {
     public void make(List<TaskBean> cardInfos) {
         log.info("CardServiceImpl_make_cardInfos.size:{},JSON:{}", cardInfos.size(), JSONUtil.toJsonStr(cardInfos));
         ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
-        DeviceManage.initDevice(expectDeviceQty);
         log.info("将任务加入队列，任务队列数：{}", DeviceManage.taskQueueWait.size());
         cardInfos.forEach(c -> DeviceManage.taskQueueWait.addLast(c));
         TaskBean taskBean = null;

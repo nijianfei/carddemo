@@ -25,11 +25,8 @@ public class JavaRD800 {
 
     private native short dc_authentication(int i, short s, short s2);
 
-    private native short dc_beep(int i, short s);
+    public native short dc_beep(int i, short s);
 
-    /**
-     * 卡片初始化
-     */
     private native short dc_card(int i, short s, int[] iArr);
 
     private native short dc_config_card(int i, char c);
@@ -50,23 +47,25 @@ public class JavaRD800 {
 
     private native short dc_disp_str(int i, char[] cArr);
 
-    /**
-     * 退出设备
-     */
     private native short dc_exit(int i);
 
     private native short dc_gettime(int i, char[] cArr);
 
     private native short dc_gettimehex(int i, char[] cArr);
 
-    private native short dc_halt(int i);
+    public native short dc_halt(int i);
 
     private native short dc_high_disp(int i, short s, short s2, char[] cArr);
 
     private native short dc_increment(int i, short s, int i2);
 
     /**
-     * 设备初始化
+     * 功 能：初始化通讯口
+     * 参 数：port：取值为0～19时，表示串口1～20；为100时，表示USB口通讯，此时波特率无效。
+     * baud：为通讯波特率9600～115200
+     * 返 回：成功则返回串口标识符>0，失败返回负值，见错误代码表
+     * 例：int icdev;
+     * icdev=dc_init(0,9600);//初始化串口1，波特率9600
      */
     public native int dc_init(int i, int i2);
 
@@ -75,10 +74,28 @@ public class JavaRD800 {
     private native short dc_load_key(int i, short s, short s2, char[] cArr);
 
     /**
-     * 写卡
+     * __int16 dc_pro_command(HANDLE ICDev,unsigned char slen,unsigned char * sbuff,unsigned char *rlen,unsigned char * rbuff,unsigned char tt)
+     * 说明：应用协议数据单元信息交换函数。该函数已封装T=CL操作
+     * 调用：int ICDev ----dc_init 函数返回的端口标识符
+     * unsigned char slen ---- 发送的信息长度
+     * unsigned char * sbuff ---- 存放要发送的信息
+     * unsigned char *rlen ---- 返回信息的长度
+     * unsigned char * rbuff ---- 存放返回的信息
+     * unsigned char tt---- 延迟时间，单位为：10ms
+     * 返回： <0 错误。其绝对值为错误号
+     * =0 成功
      */
     public native short dc_pro_command(int i, short s, char[] cArr, short[] sArr, char[] cArr2, short s2);
 
+    /**
+     * __int16 dc_pro_reset(HANDLE ICDev,unsigned char *rlen, unsigned char *rbuff)
+     * 说明：卡上电复位函数,仅针对于TYPE A 卡
+     * 调用：int ICDev ---- dc_init 函数返回的端口标识符
+     * unsigned char *rlen ---- 返回复位信息的长度
+     * unsigned char * rbuff ---- 存放返回的复位信息
+     * 返回： <0 错误。其绝对值为错误号
+     * =0 成功。
+     */
     public native short dc_pro_reset(int i, short[] sArr, char[] cArr);
 
     private native String dc_read(int i, short s, String str);
@@ -135,25 +152,30 @@ public class JavaRD800 {
     }
 
     public String readCardId() {
-        int tryCount = 3;
-        while (initDevice() < 0 && tryCount-- > 0) {
-            DeviceManage.sleep(500);
-        }
-        if (initDevice() < 0) {
-            log.error("设备 initDevice，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, "-1");
-            return "-1";
-        }
-        return readCard();
+//        int tryCount = 3;
+//        while (initDevice() < 0 && tryCount-- > 0) {
+//            DeviceManage.sleep(100);
+//        }
+//        if (lDevice < 0) {
+//            log.error("设备 initDevice，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, "-1");
+//            return "-1";
+//        }
+        DeviceManage.sleep(50);
+        String rc = readCard();
+//        if (Objects.equals(rc, "0")) {
+//            initDevice();
+//            DeviceManage.sleep(50);
+//            return readCard();
+//        }
+        return rc;
     }
 
     public String readCard() {
-        this.dc_reset(lDevice, 1);
         long cardNum;
         int[] pSnr = new int[20];
         int status = this.dc_card(this.getlDevice(), (short) 0, pSnr);
         if (status != 0 && status != 1) {
-//            log.error("lDevice:{}, readCardId_dc_card error （无卡片）!", lDevice);
-            this.dc_exit(this.getlDevice());
+//            this.dc_exit(this.getlDevice());
         }
         if (pSnr[0] < 0) {
             cardNum = -(-4294967296L - ((long) pSnr[0]));
@@ -164,6 +186,7 @@ public class JavaRD800 {
         log.info("readCard，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, cardId);
         return cardId;
     }
+
     public void dcExit() {
         if (this.dc_exit(this.getlDevice()) != 0) {
             System.out.print("dc_exit error!\n");
@@ -177,8 +200,11 @@ public class JavaRD800 {
         log.debug("设备dc_init，deviceNo：{},返回结果lDevice：{},打开读卡器端口:{}", deviceNo, lDevice, lDevice > 0);
         if (lDevice <= 0) {
             short dcexitResult = this.dc_exit(lDevice);
-//            System.out.println("打开读卡器端口失败!" + deviceNo);
-            log.error("打开读卡器端口失败!设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+            System.out.println("deviceNo:" + deviceNo + " dc_exit:" + dcexitResult);
+            lDevice = this.dc_init(deviceNo, 115200);
+            if (lDevice <= 0) {
+                log.error("打开读卡器端口失败!设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+            }
             return lDevice;
         }
         short resetResult = this.dc_reset(lDevice, 1);

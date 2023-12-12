@@ -89,6 +89,7 @@ public class WebSocket {
             if (DeviceManage.tryStartTask(true)) {
                 log.info("tHashCode：{}-开始任务_isWord:{}，isClean：{}，isInit：{}", tHashCode, DeviceManage.isWord(), DeviceManage.isIsClean(), DeviceManage.isInit());
                 List<TaskBean> taskList = maps.stream().map(m -> new TaskBean(sessionHashCode, m)).collect(Collectors.toList());
+                DeviceManage.sleep(2000);
                 cardService.make(taskList);
                 break;
             }
