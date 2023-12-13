@@ -2,9 +2,12 @@ package com.jobcard.demo.util;
 
 import cn.hutool.core.date.DateUtil;
 import com.jobcard.demo.common.DeviceManage;
+import com.jobcard.demo.config.EnvironmentBean;
 import dcrf.JavaRD800;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.beans.BeansException;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -16,6 +19,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+
+import static com.jobcard.demo.DemoApplication.ac;
 
 @Slf4j
 public class CardReader {
@@ -191,13 +196,22 @@ public class CardReader {
         if (datasw[0] == 'i' && datasw[1] == 'i') {
             System.out.println("刷屏时出错:698A");
             this.transStatus.notifyMessage("刷屏出错：698A");
+            warningSound();
         } else if (datasw[0] != 'i' || datasw[1] != 134) {
             return true;
         } else {
             System.out.println("刷屏时出错:6986");
             this.transStatus.notifyMessage("刷屏出错：6986");
+            warningSound();
         }
+        warningSound();
         return false;
+    }
+
+    private void warningSound() {
+        if (isEnablePromptSound()) {
+            this.rd.dc_beep(this.lDevice, (short) 50);
+        }
     }
 
     private void getRefreshResult(int tryCount) {
@@ -217,9 +231,6 @@ public class CardReader {
                     this.transStatus.notifyMessage("刷屏成功");
                     System.out.println("刷屏成功");
                     this.transStatus.finish(true);
-                    if (false) {
-                        this.rd.dc_beep(this.lDevice, (short) 100);
-                    }
                     return;
                 }
                 if (datasw[0] == 1 && datasw[1] == 144) {
@@ -233,10 +244,25 @@ public class CardReader {
             }
             this.transStatus.notifyMessage("刷新失败");
             this.transStatus.finish(false);
+            warningSound();
         } catch (InterruptedException e) {
             this.transStatus.notifyMessage("获取刷屏结果发生错误，指令无响应");
             this.transStatus.finish(false);
+            warningSound();
         }
+    }
+
+    private boolean isEnablePromptSound() {
+        try {
+            EnvironmentBean config = ac.getBean(EnvironmentBean.class);
+            String enablePromptSound = config.getValue("errorPromptSound");
+            if (StringUtils.isNotBlank(enablePromptSound)) {
+                return Boolean.parseBoolean(enablePromptSound);
+            }
+        } catch (BeansException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
     }
 
     private void tryRefresh() {
