@@ -103,6 +103,7 @@ public class DeviceManage {
         DeviceState deviceState = null;
         Map<String, String> cardInfo = taskBean.getParam();
         String userId = cardInfo.get("userId");
+        String paramCardId = cardInfo.get("cardId");
         try {
             cardId = rd.readCardId();
             deviceNo = rd.getlDevice();
@@ -114,7 +115,7 @@ public class DeviceManage {
             }
             deviceState.setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
-            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId, cardInfo.get("buildingId"));
+            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId, cardInfo.get("buildingId"),paramCardId);
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
             //通知开始写卡
             sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));

@@ -1,11 +1,13 @@
 package com.jobcard.demo.service.impl;
 
+import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.beust.jcommander.internal.Maps;
 import com.jobcard.demo.DemoApplication;
 import com.jobcard.demo.bean.CoreResultBean;
+import com.jobcard.demo.bean.DeviceState;
 import com.jobcard.demo.bean.TaskBean;
 import com.jobcard.demo.common.DeviceManage;
 import com.jobcard.demo.enums.CoreCheckStateEnum;
@@ -19,11 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -50,7 +52,10 @@ public class CardServiceImpl implements CardService {
         log.info("CardServiceImpl_make_cardInfos.size:{},JSON:{}", cardInfos.size(), JSONUtil.toJsonStr(cardInfos));
         ThreadPoolTaskExecutor threadPoolTaskExecutor = DemoApplication.ac.getBean("threadPoolTaskExecutor", ThreadPoolTaskExecutor.class);
         log.info("将任务加入队列，任务队列数：{}", DeviceManage.taskQueueWait.size());
-        cardInfos.forEach(c -> DeviceManage.taskQueueWait.addLast(c));
+        Map<String, String> refreshCardIdMap = cardInfos.stream().map(t -> t.getParam().get("cardId")).filter(StringUtils::isNotBlank)
+                .collect(Collectors.toMap(Function.identity(), Function.identity()));
+        cardInfos.stream().filter(t -> StringUtils.isNotBlank(t.getParam().get("cardId"))).forEach(c -> DeviceManage.taskQueueWait.addLast(c));
+        cardInfos.stream().filter(t -> StringUtils.isBlank(t.getParam().get("cardId"))).forEach(c -> DeviceManage.taskQueueWait.addLast(c));
         TaskBean taskBean = null;
         JavaRD800 rd = null;
         int count = 0;
@@ -60,11 +65,12 @@ public class CardServiceImpl implements CardService {
                 if (DeviceManage.taskQueueWait.size() == 0 && DeviceManage.taskQueueCurrent.size() == 0) {
                     break;
                 }
-                if (Objects.isNull(rd = DeviceManage.readyQueue.pollFirst())) {
+                if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
                     DeviceManage.sleep(500);
                     continue;
                 }
-                if (Objects.isNull((taskBean = DeviceManage.taskQueueWait.poll()))) {
+                if (Objects.isNull(rd = getRd(taskBean.getParam(), refreshCardIdMap))) {
+                    DeviceManage.taskQueueWait.addLast(taskBean);
                     DeviceManage.sleep(500);
                     continue;
                 }
@@ -98,8 +104,33 @@ public class CardServiceImpl implements CardService {
         }
     }
 
-    public CoreCheckStateEnum checkUserIdAndCardId(String cardId, String userId, String buildingId) {
-        if (isCheck) {
+    private JavaRD800 getRd(Map<String, String> param, Map<String, String> refreshCardIdMap) {
+        JavaRD800 currentRd = null;
+        JavaRD800 lastRd = null;
+        String paramCardId = param.get("cardId");
+        boolean isNotRefresh = StringUtils.isBlank(paramCardId);
+        log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{}", isNotRefresh,paramCardId);
+        while (Objects.nonNull(currentRd = DeviceManage.readyQueue.pollFirst())) {
+            lastRd = currentRd;
+            DeviceState deviceState = DeviceManage.deviceState.get(currentRd.getlDevice());
+            String lastRdCardNo = deviceState.getLastRdCardNo();
+            if (isNotRefresh && (CollectionUtils.isEmpty(refreshCardIdMap) || Objects.isNull(refreshCardIdMap.get(lastRdCardNo)))) {
+                log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},正常绑卡操作获取到设备号：{}_{}", isNotRefresh,paramCardId, currentRd.getlDevice(), lastRdCardNo);
+                return currentRd;
+            }
+            if (Objects.equals(lastRdCardNo, paramCardId)) {
+                log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},重新刷卡操作获取到设备号：{}_{}", isNotRefresh,paramCardId, currentRd.getlDevice(), lastRdCardNo);
+                return currentRd;
+            }
+            DeviceManage.sleep(100);
+        }
+
+        log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},{}操作获取到设备号 null", isNotRefresh,paramCardId, isNotRefresh ? "正常绑卡" : "重新刷卡");
+        return isNotRefresh ? lastRd : null;
+    }
+
+    public CoreCheckStateEnum checkUserIdAndCardId(String cardId, String userId, String buildingId, String paramCardId) {
+        if (isCheck && Objects.equals(cardId, paramCardId)) {
             Map<String, String> strMap = Maps.newHashMap("cardId", cardId, "userId", userId, "buildingId", buildingId);
             //调用中台查询人卡是否合法
             String paramsStr = null;

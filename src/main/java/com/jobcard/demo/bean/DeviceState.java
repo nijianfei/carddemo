@@ -15,6 +15,8 @@ public class DeviceState {
     private JavaRD800 rd;
     private String userId;
 
+    private String lastRdCardNo;
+
     public DeviceStateEnum getStateEnum() {
         return stateEnum;
     }
@@ -56,4 +58,11 @@ public class DeviceState {
     }
 
 
+    public String getLastRdCardNo() {
+        return lastRdCardNo;
+    }
+
+    public void setLastRdCardNo(String lastRdCardNo) {
+        this.lastRdCardNo = lastRdCardNo;
+    }
 }

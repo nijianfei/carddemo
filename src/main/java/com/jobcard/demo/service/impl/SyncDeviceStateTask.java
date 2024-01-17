@@ -34,9 +34,9 @@ public class SyncDeviceStateTask {
             initDevice();
             DeviceManage.sleep(500);
         }
-//        if (!DeviceManage.isWord()) {
-//            initDevice();
-//        }
+        if (!DeviceManage.isWord()) {
+            initDevice();
+        }
 
         Set<Integer> deviceNos = DeviceManage.deviceState.keySet();
         StringBuilder sb = new StringBuilder();
@@ -75,6 +75,7 @@ public class SyncDeviceStateTask {
                     if (!Objects.equals(cardId, "0") && !Objects.equals(cardId, lastCardNo)) {
                         DeviceManage.pushReadyQueue(deviceState.getRd());
                         deviceState.setStateEnum(DeviceStateEnum.READY);
+                        deviceState.setLastRdCardNo(cardId);
                         log.info("\r\n--->设备号:{},状态:{}--》READY,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
                     }
                     break;
