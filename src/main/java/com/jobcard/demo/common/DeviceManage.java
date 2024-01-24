@@ -17,11 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.stream.Collectors;
 
 public class DeviceManage {
     private static Logger log = LoggerFactory.getLogger(DeviceManage.class);
@@ -226,8 +225,16 @@ public class DeviceManage {
             log.info("【发送Socket通知信息】：{}", JSONUtil.toJsonStr(Arrays.asList(srVo)));
             webSocket.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
         } else {
-            log.info("【发送Socket通知信息——源连接 currentHashCode：{}，消息sessionHashCode：{}】不一致，跳过通知！！！ 内容：{}",
-                    currentHashCode, srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
+//            log.info("【发送Socket通知信息——源连接 currentHashCode：{}，消息sessionHashCode：{}】不一致，跳过通知！！！ 内容：{}",
+//                    currentHashCode, srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
+            List<Integer> collect = WebSocket.webSocketMap.keySet().stream().collect(Collectors.toList());
+            if (!collect.isEmpty()) {
+                WebSocket webSocket = WebSocket.webSocketMap.get(collect.get(0));
+                log.info("【发送Socket通知信息——源连接 currentHashCode：{}，消息sessionHashCode：{}】不一致! 内容：{}",
+                        currentHashCode, srVo.sessionHashCode, JSONUtil.toJsonStr(Arrays.asList(srVo)));
+                webSocket.sendMessage(JSONUtil.toJsonStr(Arrays.asList(srVo)));
+            }
+
         }
     }
 

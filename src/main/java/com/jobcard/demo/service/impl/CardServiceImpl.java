@@ -126,7 +126,7 @@ public class CardServiceImpl implements CardService {
         }
 
         log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},{}操作获取到设备号 null", isNotRefresh,paramCardId, isNotRefresh ? "正常绑卡" : "重新刷卡");
-        return isNotRefresh ? lastRd : null;
+        return null;
     }
 
     public CoreCheckStateEnum checkUserIdAndCardId(String cardId, String userId, String buildingId, String paramCardId) {
