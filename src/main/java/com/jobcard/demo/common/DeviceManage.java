@@ -104,7 +104,7 @@ public class DeviceManage {
         String userId = cardInfo.get("userId");
         String paramCardId = cardInfo.get("cardId");
         try {
-            cardId = rd.readCardId();
+            cardId = rd.readCard();
             deviceNo = rd.getlDevice();
             taskBean.setCardId(cardId);
             log.info("获取可用设备：{},读取卡号：{}", deviceNo, cardId);

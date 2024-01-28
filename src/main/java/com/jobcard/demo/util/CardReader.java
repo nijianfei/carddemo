@@ -51,7 +51,7 @@ public class CardReader {
     }
 
     public TransStatus start(BufferedImage image) {
-        String cardId = this.rd.readCardId();
+        String cardId = this.rd.readCard();
         if (Long.parseLong(cardId) <= 0) {
             log.error("lDevice:{},dc_card异常", this.lDevice);
             this.transStatus.notifyMessage("卡片初始化失败");
@@ -226,7 +226,8 @@ public class CardReader {
             for (int i = 0; i < tryCount; i++) {
                 this.rd.dc_pro_command(this.lDevice, (short) refreshcmd.length, refreshcmd, rlen, datasw, (short) 100);
                 if (datasw[0] == 0 && datasw[1] == 144) {
-                    this.rd.dc_halt(this.lDevice);
+                    //客户机 不兼容 读不到卡号
+//                    this.rd.dc_halt(this.lDevice);
                     Thread.sleep(500);
                     this.transStatus.notifyMessage("刷屏成功");
                     System.out.println("刷屏成功");

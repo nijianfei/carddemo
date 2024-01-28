@@ -151,7 +151,7 @@ public class JavaRD800 {
         this.deviceNo = deviceNo;
     }
 
-    public String readCardId() {
+    public String resetReadCard() {
 //        int tryCount = 3;
 //        while (initDevice() < 0 && tryCount-- > 0) {
 //            DeviceManage.sleep(100);
@@ -160,6 +160,13 @@ public class JavaRD800 {
 //            log.error("设备 initDevice，deviceNo：{},lDevice：{}，返回结果cardId：{}", deviceNo, lDevice, "-1");
 //            return "-1";
 //        }
+        short resetResult = this.dc_reset(lDevice, 1);
+        log.debug("设备dc_reset，deviceNo：{},lDevice：{}，返回结果resetResult：{},重置设备：{}", deviceNo, lDevice, resetResult, resetResult == 0);
+        if (resetResult != 0) {
+            System.out.print(String.format("dc_reset error! %s\n", deviceNo));
+            short dcexitResult = this.dc_exit(lDevice);
+            log.error("设备dc_reset，deviceNo：{},lDevice：{}，返回结果dcexitResult：{}", deviceNo, lDevice, dcexitResult);
+        }
         DeviceManage.sleep(50);
         String rc = readCard();
 //        if (Objects.equals(rc, "0")) {
@@ -278,7 +285,7 @@ public class JavaRD800 {
         BufferedImage image1 = adapter.getImage(cardInfo1);
         JavaRD800 rd = new JavaRD800();
         rd.setDeviceNo(100);
-        rd.readCardId();
+        rd.readCard();
         DeviceState deviceState = new DeviceState();
         deviceState.setRd(rd);
         deviceState.setStateEnum(DeviceStateEnum.FREE);
@@ -286,7 +293,7 @@ public class JavaRD800 {
 
         JavaRD800 rd800 = new JavaRD800();
         rd800.setDeviceNo(101);
-        rd800.readCardId();
+        rd800.readCard();
         DeviceState deviceState1 = new DeviceState();
         deviceState1.setRd(rd800);
         deviceState1.setStateEnum(DeviceStateEnum.FREE);

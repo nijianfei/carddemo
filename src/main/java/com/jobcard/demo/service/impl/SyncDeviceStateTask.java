@@ -60,7 +60,7 @@ public class SyncDeviceStateTask {
                 case EXCEPTION:
                 case FREE:
                 case READY:
-                    cardId = deviceState.getRd().readCardId();
+                    cardId = deviceState.getRd().resetReadCard();
                      if (Objects.equals(cardId, "-1")) {//卡号为-1，读卡异常
                         deviceState.setStateEnum(DeviceStateEnum.EXCEPTION);
                         log.info("\r\n--->设备号:{},状态:{}--》EXCEPTION,lastCardNo:{},cardId:{}",deviceNo,sourceState,lastCardNo,cardId);
