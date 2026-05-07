@@ -74,21 +74,28 @@ public class CardServiceImpl implements CardService {
                     DeviceManage.sleep(500);
                     continue;
                 }
-                DeviceManage.deviceState.get(rd.getlDevice()).setStateEnum(DeviceStateEnum.BUSY);
+                DeviceState rdDeviceState = DeviceManage.deviceState.get(rd.getlDevice());
+                rdDeviceState.setStateEnum(DeviceStateEnum.BUSY);
                 if (WebSocket.isTryStart()) {
                     DeviceManage.taskQueueWait.clear();
                     DeviceManage.sleep(500);
                     continue;
                 }
+                String preReadCardId = rd.readCard();
+                DeviceState deviceState = DeviceManage.deviceState.get(rd.getlDevice());
+                String lastRdCardNo = deviceState.getLastRdCardNo();
+                final String finalReadCardId = "0".equals(preReadCardId) ? lastRdCardNo : preReadCardId;
+                if ("0".equals(preReadCardId)) {
+                    log.debug("preReadCardId:{},使用 lastRdCardNo:{},finalReadCardId:{}", preReadCardId, lastRdCardNo, finalReadCardId);
+                }
                 taskBean.setTaskState(TaskStateEnum.BUSY);
                 DeviceManage.taskQueueCurrent.add(taskBean);
                 log.info("第{}次執行，写卡信息：{}", ++count, JSONUtil.toJsonStr(taskBean));
-
                 final TaskBean tBean = taskBean;
                 final JavaRD800 finalRd = rd;
                 threadPoolTaskExecutor.submit(() -> {
                     try {
-                        DeviceManage.writeCard(finalRd, tBean, this);
+                        DeviceManage.writeCard(finalReadCardId, finalRd, tBean, this);
                     } finally {
                         DeviceManage.taskQueueCurrent.remove(tBean);
                     }
@@ -109,21 +116,21 @@ public class CardServiceImpl implements CardService {
         String paramCardId = param.get("cardId");
         String name = param.get("name");
         boolean isNotRefresh = StringUtils.isBlank(paramCardId);
-        log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{}", isNotRefresh,paramCardId);
+        log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{}", isNotRefresh, paramCardId);
         while (Objects.nonNull(currentRd = DeviceManage.readyQueue.pollFirst())) {
             DeviceState deviceState = DeviceManage.deviceState.get(currentRd.getlDevice());
             String lastRdCardNo = deviceState.getLastRdCardNo();
             if (isNotRefresh && (CollectionUtils.isEmpty(refreshCardIdMap) || Objects.isNull(refreshCardIdMap.get(lastRdCardNo)))) {
-                log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},【{}】正常绑卡操作获取到设备号：{}_{}", isNotRefresh,paramCardId,name, currentRd.getlDevice(), lastRdCardNo);
+                log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},【{}】正常绑卡操作获取到设备号：{}_{}", isNotRefresh, paramCardId, name, currentRd.getlDevice(), lastRdCardNo);
                 return currentRd;
             }
             if (Objects.equals(lastRdCardNo, paramCardId)) {
-                log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},【{}】重新刷卡操作获取到设备号：{}_{}", isNotRefresh,paramCardId,name, currentRd.getlDevice(), lastRdCardNo);
+                log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},【{}】重新刷卡操作获取到设备号：{}_{}", isNotRefresh, paramCardId, name, currentRd.getlDevice(), lastRdCardNo);
                 return currentRd;
             }
             DeviceManage.sleep(100);
         }
-        log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},【{}】{}操作获取到设备号（可用设备为空）：{}", isNotRefresh,paramCardId, name,isNotRefresh ? "正常绑卡" : "重新刷卡",Objects.nonNull(currentRd));
+        log.info("CardServiceImpl_getRd_isNotRefresh[{}]_paramCardId:{},【{}】{}操作获取到设备号（可用设备为空）：{}", isNotRefresh, paramCardId, name, isNotRefresh ? "正常绑卡" : "重新刷卡", Objects.nonNull(currentRd));
         return null;
     }
 

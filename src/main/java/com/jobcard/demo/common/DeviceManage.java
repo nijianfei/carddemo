@@ -96,7 +96,7 @@ public class DeviceManage {
         SetInit(false);
     }
 
-    public static void writeCard(JavaRD800 rd, TaskBean taskBean, CardServiceImpl cardServiceImpl) {
+    public static void writeCard(String readCardId, JavaRD800 rd, TaskBean taskBean, CardServiceImpl cardServiceImpl) {
         Integer deviceNo = null;
         String cardId = null;
         DeviceState deviceState = null;
@@ -105,6 +105,11 @@ public class DeviceManage {
         String paramCardId = cardInfo.get("cardId");
         try {
             cardId = rd.readCard();
+            if ("0".equals(cardId)) {
+                log.warn("rd.readCard()结果为:{}不符合预期,使用预获取卡号[{}]尝试", cardId, readCardId);
+                //,如果存在问题,直接写卡失败,提示用户重新放卡
+                cardId = readCardId;
+            }
             deviceNo = rd.getlDevice();
             taskBean.setCardId(cardId);
             log.info("获取可用设备：{},读取卡号：{}", deviceNo, cardId);
@@ -114,7 +119,7 @@ public class DeviceManage {
             }
             deviceState.setUserId(userId);
             taskBean.setTaskState(TaskStateEnum.BUSY);
-            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId, cardInfo.get("buildingId"),paramCardId);
+            CoreCheckStateEnum coreCheckStateEnum = cardServiceImpl.checkUserIdAndCardId(cardId, userId, cardInfo.get("buildingId"), paramCardId);
             log.info("人卡校验参数：cardId:{},userId:{}，校验结果：{}", cardId, userId, coreCheckStateEnum);
             //通知开始写卡
             sendMsg(new SoketResultVo(taskBean, DeviceStateEnum.BUSY.getCode(), DeviceStateEnum.BUSY.getValue()));
