@@ -3,6 +3,7 @@ package com.jobcard.demo;
 import cn.hutool.json.JSONUtil;
 import com.jobcard.demo.service.CheckAndBuild;
 import com.jobcard.demo.util.TemplateAdapter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -11,6 +12,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 
 import java.util.Map;
 
+@Slf4j
 @EnableWebSocket
 @EnableScheduling
 @SpringBootApplication
@@ -21,7 +23,7 @@ public class DemoApplication {
     public static void main(String[] args) {
         ac = SpringApplication.run(DemoApplication.class, args);
         CheckAndBuildImplMap = ac.getBeansOfType(CheckAndBuild.class);
-
+        log.info("启动成功,编译时间:{}", "20260507 143000");
 //        try {
 //            CardServiceImpl bean = ac.getBean(CardServiceImpl.class);
 //            String styleData = bean.getStyleData("");
